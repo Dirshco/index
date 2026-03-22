@@ -1,1 +1,676 @@
-test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dirshco Repository Index</title>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #667eea; --primary-dark: #5568d3; --secondary: #764ba2;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: #f8f9fa; --text-primary: #222; --text-secondary: #666;
+            --border-color: #e9ecef; --shadow: 0 4px 20px rgba(0,0,0,0.15);
+            --shadow-hover: 0 8px 30px rgba(102,126,234,0.3);
+            --success: #28a745; --warning: #ffc107; --danger: #dc3545;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-gradient); min-height: 100vh; padding: 20px;
+            display: flex; justify-content: center; align-items: flex-start;
+        }
+
+        .container {
+            background: white; border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px; width: 100%; padding: 30px; margin: 20px 0;
+        }
+
+        header {
+            text-align: center; margin-bottom: 25px;
+            padding-bottom: 20px; border-bottom: 2px solid var(--border-color);
+        }
+
+        h1 { color: var(--text-primary); font-size: 1.7rem; margin-bottom: 6px; }
+        .subtitle { color: var(--text-secondary); font-size: 0.95rem; }
+
+        /* Search Box */
+        .search-container { margin-bottom: 20px; position: relative; }
+        #searchInput {
+            width: 100%; padding: 14px 20px 14px 45px;
+            border: 2px solid var(--border-color); border-radius: 12px;
+            font-size: 1rem; transition: all 0.3s ease; background: #fff;
+        }
+        #searchInput:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.15);
+        }
+        .search-icon {
+            position: absolute; left: 15px; top: 50%;
+            transform: translateY(-50%); color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Action Buttons */
+        .actions {
+            display: flex; gap: 10px; margin-bottom: 15px;
+            flex-wrap: wrap; justify-content: flex-end;
+        }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 18px; border: none; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 500; cursor: pointer;
+            transition: all 0.2s ease; text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient); color: white;
+            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.45);
+        }
+
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #218838; transform: translateY(-2px); }
+
+        .btn-warning { background: var(--warning); color: #222; }
+        .btn-warning:hover { background: #e0a800; transform: translateY(-2px); }
+
+        .btn-outline {
+            background: transparent; border: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover {
+            border-color: var(--primary); background: #f8f9ff;
+        }
+
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+        .results-count {
+            text-align: right; color: var(--text-secondary);
+            font-size: 0.9rem; margin-bottom: 10px;
+        }
+
+        /* Links Grid */
+        .links-grid {
+            display: grid; gap: 10px; max-height: 55vh;
+            overflow-y: auto; padding-right: 5px;
+        }
+        .links-grid::-webkit-scrollbar { width: 6px; }
+        .links-grid::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+        .links-grid::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+        .link-card {
+            display: flex; align-items: center; padding: 14px 18px;
+            background: var(--card-bg); border: 2px solid var(--border-color);
+            border-radius: 10px; text-decoration: none; color: var(--text-primary);
+            transition: all 0.25s ease; cursor: pointer;
+        }
+        .link-card:hover {
+            border-color: var(--primary); background: #fff;
+            transform: translateX(4px); box-shadow: var(--shadow-hover);
+        }
+        .link-card.hidden { display: none; }
+
+        .link-icon {
+            width: 34px; height: 34px; background: var(--bg-gradient);
+            border-radius: 8px; display: flex; align-items: center;
+            justify-content: center; margin-right: 14px; flex-shrink: 0;
+            font-size: 14px;
+        }
+        .link-text { flex: 1; min-width: 0; }
+        .link-title {
+            font-weight: 600; font-size: 1.05rem; color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .link-url {
+            font-size: 0.8rem; color: var(--text-secondary);
+            word-break: break-all; margin-top: 2px;
+        }
+        .link-arrow {
+            color: var(--primary); font-size: 1.1rem;
+            margin-left: 8px; flex-shrink: 0;
+        }
+
+        .category-tag {
+            display: inline-block; padding: 3px 10px;
+            background: var(--primary); color: white;
+            border-radius: 20px; font-size: 0.75rem;
+            margin-left: 8px; vertical-align: middle;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex; justify-content: center; gap: 15px;
+            margin-bottom: 15px; flex-wrap: wrap;
+        }
+        .stat-item {
+            background: var(--card-bg); padding: 8px 16px;
+            border-radius: 20px; font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .stat-item strong { color: var(--primary); }
+
+        /* Footer */
+        footer {
+            text-align: center; margin-top: 25px;
+            padding-top: 20px; border-top: 1px solid var(--border-color);
+            color: var(--text-secondary); font-size: 0.9rem;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #333; color: white; padding: 14px 24px;
+            border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex; align-items: center; gap: 10px;
+            transform: translateX(150%); transition: transform 0.3s ease;
+            z-index: 1000; max-width: 350px;
+        }
+        .toast.show { transform: translateX(0); }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast-icon { font-size: 1.2rem; }
+
+        /* Export Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center; z-index: 999;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white; border-radius: 16px; padding: 25px;
+            max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 20px;
+            padding-bottom: 15px; border-bottom: 1px solid var(--border-color);
+        }
+        .modal-title { font-size: 1.3rem; font-weight: 600; color: var(--text-primary); }
+        .modal-close {
+            background: none; border: none; font-size: 1.5rem;
+            cursor: pointer; color: var(--text-secondary);
+        }
+        .modal-close:hover { color: var(--danger); }
+        .modal-body { margin-bottom: 20px; }
+        .modal-footer {
+            display: flex; gap: 10px; justify-content: flex-end;
+        }
+
+        .export-option {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px; border: 2px solid var(--border-color);
+            border-radius: 10px; margin-bottom: 10px; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .export-option:hover, .export-option.selected {
+            border-color: var(--primary); background: #f8f9ff;
+        }
+        .export-option input { margin: 0; }
+        .export-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+        }
+        .export-icon.pdf { background: #e74c3c; color: white; }
+        .export-icon.csv { background: #27ae60; color: white; }
+        .export-info h4 { margin-bottom: 4px; color: var(--text-primary); }
+        .export-info p { font-size: 0.85rem; color: var(--text-secondary); }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container { padding: 20px; margin: 10px; }
+            h1 { font-size: 1.4rem; }
+            .link-card { flex-direction: column; align-items: flex-start; padding: 12px 15px; }
+            .link-icon { margin-right: 0; margin-bottom: 10px; }
+            .link-arrow { display: none; }
+            .links-grid { max-height: 45vh; }
+            .actions { justify-content: center; }
+            .btn { width: 100%; justify-content: center; }
+        }
+
+        .no-results {
+            text-align: center; padding: 30px;
+            color: var(--text-secondary); display: none;
+        }
+        .no-results.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗂️ Dirshco Repository Index</h1>
+            <p class="subtitle">Quick access to all projects & resources</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-item">📦 <strong id="totalRepos">30</strong> Repositories</div>
+            <div class="stat-item">🔍 Search enabled</div>
+            <div class="stat-item">📤 Export ready</div>
+        </div>
+
+        <div class="search-container">
+            <span class="search-icon">🔎</span>
+            <input type="text" id="searchInput" placeholder="Filter repositories by name..." autocomplete="off">
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-outline" onclick="clearSearch()">✕ Clear</button>
+            <button class="btn btn-primary" onclick="openExportModal()">📤 Export</button>
+        </div>
+
+        <div class="results-count" id="resultsCount">Showing 30 repositories</div>
+
+        <nav class="links-grid" id="linksGrid">
+            <!-- Medical & Health -->
+            <a href="https://dirshco.github.io/asthma" class="link-card" target="_blank" rel="noopener noreferrer" data-name="asthma" data-category="Medical" data-url="https://dirshco.github.io/asthma">
+                <div class="link-icon">🫁</div><div class="link-text"><div class="link-title">asthma <span class="category-tag">Medical</span></div><div class="link-url">dirshco.github.io/asthma</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/COPD" class="link-card" target="_blank" rel="noopener noreferrer" data-name="COPD" data-category="Medical" data-url="https://dirshco.github.io/COPD">
+                <div class="link-icon">🫁</div><div class="link-text"><div class="link-title">COPD <span class="category-tag">Medical</span></div><div class="link-url">dirshco.github.io/COPD</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/renal" class="link-card" target="_blank" rel="noopener noreferrer" data-name="renal" data-category="Medical" data-url="https://dirshco.github.io/renal">
+                <div class="link-icon">🫘</div><div class="link-text"><div class="link-title">renal <span class="category-tag">Medical</span></div><div class="link-url">dirshco.github.io/renal</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/Sleep-and-Dementia" class="link-card" target="_blank" rel="noopener noreferrer" data-name="Sleep-and-Dementia" data-category="Research" data-url="https://dirshco.github.io/Sleep-and-Dementia">
+                <div class="link-icon">🧠</div><div class="link-text"><div class="link-title">Sleep-and-Dementia <span class="category-tag">Research</span></div><div class="link-url">dirshco.github.io/Sleep-and-Dementia</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/fall-risk-manager" class="link-card" target="_blank" rel="noopener noreferrer" data-name="fall-risk-manager" data-category="Tool" data-url="https://dirshco.github.io/fall-risk-manager">
+                <div class="link-icon">🛡️</div><div class="link-text"><div class="link-title">fall-risk-manager <span class="category-tag">Tool</span></div><div class="link-url">dirshco.github.io/fall-risk-manager</div></div><span class="link-arrow">→</span>
+            </a>
+
+            <!-- Apps & Tools -->
+            <a href="https://dirshco.github.io/MediTrack" class="link-card" target="_blank" rel="noopener noreferrer" data-name="MediTrack" data-category="App" data-url="https://dirshco.github.io/MediTrack">
+                <div class="link-icon">📱</div><div class="link-text"><div class="link-title">MediTrack <span class="category-tag">App</span></div><div class="link-url">dirshco.github.io/MediTrack</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/MedSpan_Pro" class="link-card" target="_blank" rel="noopener noreferrer" data-name="MedSpan_Pro" data-category="Pro" data-url="https://dirshco.github.io/MedSpan_Pro">
+                <div class="link-icon">💼</div><div class="link-text"><div class="link-title">MedSpan_Pro <span class="category-tag">Pro</span></div><div class="link-url">dirshco.github.io/MedSpan_Pro</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/MedSpan-Pro" class="link-card" target="_blank" rel="noopener noreferrer" data-name="MedSpan-Pro" data-category="App" data-url="https://dirshco.github.io/MedSpan-Pro">
+                <div class="link-icon">💼</div><div class="link-text"><div class="link-title">MedSpan-Pro <span class="category-tag">App</span></div><div class="link-url">dirshco.github.io/MedSpan-Pro</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/BrainTrain" class="link-card" target="_blank" rel="noopener noreferrer" data-name="BrainTrain" data-category="Training" data-url="https://dirshco.github.io/BrainTrain">
+                <div class="link-icon">🧩</div><div class="link-text"><div class="link-title">BrainTrain <span class="category-tag">Training</span></div><div class="link-url">dirshco.github.io/BrainTrain</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/ChartView" class="link-card" target="_blank" rel="noopener noreferrer" data-name="ChartView" data-category="Tool" data-url="https://dirshco.github.io/ChartView">
+                <div class="link-icon">📊</div><div class="link-text"><div class="link-title">ChartView <span class="category-tag">Tool</span></div><div class="link-url">dirshco.github.io/ChartView</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/BrightSmile" class="link-card" target="_blank" rel="noopener noreferrer" data-name="BrightSmile" data-category="Dental" data-url="https://dirshco.github.io/BrightSmile">
+                <div class="link-icon">😁</div><div class="link-text"><div class="link-title">BrightSmile <span class="category-tag">Dental</span></div><div class="link-url">dirshco.github.io/BrightSmile</div></div><span class="link-arrow">→</span>
+            </a>
+
+            <!-- Education & Training -->
+            <a href="https://dirshco.github.io/Teaching_Guide" class="link-card" target="_blank" rel="noopener noreferrer" data-name="Teaching_Guide" data-category="Education" data-url="https://dirshco.github.io/Teaching_Guide">
+                <div class="link-icon">📚</div><div class="link-text"><div class="link-title">Teaching_Guide <span class="category-tag">Education</span></div><div class="link-url">dirshco.github.io/Teaching_Guide</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/Mastering-Communication-Skills" class="link-card" target="_blank" rel="noopener noreferrer" data-name="Mastering-Communication-Skills" data-category="Course" data-url="https://dirshco.github.io/Mastering-Communication-Skills">
+                <div class="link-icon">💬</div><div class="link-text"><div class="link-title">Mastering-Communication-Skills <span class="category-tag">Course</span></div><div class="link-url">dirshco.github.io/Mastering-Communication-Skills</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/leadership_role" class="link-card" target="_blank" rel="noopener noreferrer" data-name="leadership_role" data-category="Training" data-url="https://dirshco.github.io/leadership_role">
+                <div class="link-icon">👑</div><div class="link-text"><div class="link-title">leadership_role <span class="category-tag">Training</span></div><div class="link-url">dirshco.github.io/leadership_role</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/arabic_1" class="link-card" target="_blank" rel="noopener noreferrer" data-name="arabic_1" data-category="Language" data-url="https://dirshco.github.io/arabic_1">
+                <div class="link-icon">🔤</div><div class="link-text"><div class="link-title">arabic_1 <span class="category-tag">Language</span></div><div class="link-url">dirshco.github.io/arabic_1</div></div><span class="link-arrow">→</span>
+            </a>
+
+            <!-- Research & Academic -->
+            <a href="https://dirshco.github.io/Proposal1" class="link-card" target="_blank" rel="noopener noreferrer" data-name="Proposal1" data-category="Research" data-url="https://dirshco.github.io/Proposal1">
+                <div class="link-icon">📝</div><div class="link-text"><div class="link-title">Proposal1 <span class="category-tag">Research</span></div><div class="link-url">dirshco.github.io/Proposal1</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/AMDA" class="link-card" target="_blank" rel="noopener noreferrer" data-name="AMDA" data-category="Organization" data-url="https://dirshco.github.io/AMDA">
+                <div class="link-icon">🏥</div><div class="link-text"><div class="link-title">AMDA <span class="category-tag">Organization</span></div><div class="link-url">dirshco.github.io/AMDA</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/CRF" class="link-card" target="_blank" rel="noopener noreferrer" data-name="CRF" data-category="Forms" data-url="https://dirshco.github.io/CRF">
+                <div class="link-icon">📋</div><div class="link-text"><div class="link-title">CRF <span class="category-tag">Forms</span></div><div class="link-url">dirshco.github.io/CRF</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/abstracts" class="link-card" target="_blank" rel="noopener noreferrer" data-name="abstracts" data-category="Publications" data-url="https://dirshco.github.io/abstracts">
+                <div class="link-icon">📄</div><div class="link-text"><div class="link-title">abstracts <span class="category-tag">Publications</span></div><div class="link-url">dirshco.github.io/abstracts</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/TGRF" class="link-card" target="_blank" rel="noopener noreferrer" data-name="TGRF" data-category="Grants" data-url="https://dirshco.github.io/TGRF">
+                <div class="link-icon">💰</div><div class="link-text"><div class="link-title">TGRF <span class="category-tag">Grants</span></div><div class="link-url">dirshco.github.io/TGRF</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/TGRF_Applicants" class="link-card" target="_blank" rel="noopener noreferrer" data-name="TGRF_Applicants" data-category="Portal" data-url="https://dirshco.github.io/TGRF_Applicants">
+                <div class="link-icon">👥</div><div class="link-text"><div class="link-title">TGRF_Applicants <span class="category-tag">Portal</span></div><div class="link-url">dirshco.github.io/TGRF_Applicants</div></div><span class="link-arrow">→</span>
+            </a>
+
+            <!-- Events & Community -->
+            <a href="https://dirshco.github.io/seminar" class="link-card" target="_blank" rel="noopener noreferrer" data-name="seminar" data-category="Event" data-url="https://dirshco.github.io/seminar">
+                <div class="link-icon">🎤</div><div class="link-text"><div class="link-title">seminar <span class="category-tag">Event</span></div><div class="link-url">dirshco.github.io/seminar</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/webinar" class="link-card" target="_blank" rel="noopener noreferrer" data-name="webinar" data-category="Online" data-url="https://dirshco.github.io/webinar">
+                <div class="link-icon">🎥</div><div class="link-text"><div class="link-title">webinar <span class="category-tag">Online</span></div><div class="link-url">dirshco.github.io/webinar</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/visits" class="link-card" target="_blank" rel="noopener noreferrer" data-name="visits" data-category="Schedule" data-url="https://dirshco.github.io/visits">
+                <div class="link-icon">🗓️</div><div class="link-text"><div class="link-title">visits <span class="category-tag">Schedule</span></div><div class="link-url">dirshco.github.io/visits</div></div><span class="link-arrow">→</span>
+            </a>
+
+            <!-- Cultural & Regional -->
+            <a href="https://dirshco.github.io/Sudanese" class="link-card" target="_blank" rel="noopener noreferrer" data-name="Sudanese" data-category="Regional" data-url="https://dirshco.github.io/Sudanese">
+                <div class="link-icon">🌍</div><div class="link-text"><div class="link-title">Sudanese <span class="category-tag">Regional</span></div><div class="link-url">dirshco.github.io/Sudanese</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/umrah" class="link-card" target="_blank" rel="noopener noreferrer" data-name="umrah" data-category="Cultural" data-url="https://dirshco.github.io/umrah">
+                <div class="link-icon">🕋</div><div class="link-text"><div class="link-title">umrah <span class="category-tag">Cultural</span></div><div class="link-url">dirshco.github.io/umrah</div></div><span class="link-arrow">→</span>
+            </a>
+            <a href="https://dirshco.github.io/quran" class="link-card" target="_blank" rel="noopener noreferrer" data-name="quran" data-category="Religious" data-url="https://dirshco.github.io/quran">
+                <div class="link-icon">📖</div><div class="link-text"><div class="link-title">quran <span class="category-tag">Religious</span></div><div class="link-url">dirshco.github.io/quran</div></div><span class="link-arrow">→</span>
+            </a>
+
+            <!-- Media & Assets -->
+            <a href="https://dirshco.github.io/image" class="link-card" target="_blank" rel="noopener noreferrer" data-name="image" data-category="Media" data-url="https://dirshco.github.io/image">
+                <div class="link-icon">🖼️</div><div class="link-text"><div class="link-title">image <span class="category-tag">Media</span></div><div class="link-url">dirshco.github.io/image</div></div><span class="link-arrow">→</span>
+            </a>
+
+            <!-- Sports & Recreation -->
+            <a href="https://dirshco.github.io/soccer" class="link-card" target="_blank" rel="noopener noreferrer" data-name="soccer" data-category="Sports" data-url="https://dirshco.github.io/soccer">
+                <div class="link-icon">⚽</div><div class="link-text"><div class="link-title">soccer <span class="category-tag">Sports</span></div><div class="link-url">dirshco.github.io/soccer</div></div><span class="link-arrow">→</span>
+            </a>
+
+            <!-- Versioning & Misc -->
+            <a href="https://dirshco.github.io/v2026" class="link-card" target="_blank" rel="noopener noreferrer" data-name="v2026" data-category="Release" data-url="https://dirshco.github.io/v2026">
+                <div class="link-icon">🔖</div><div class="link-text"><div class="link-title">v2026 <span class="category-tag">Release</span></div><div class="link-url">dirshco.github.io/v2026</div></div><span class="link-arrow">→</span>
+            </a>
+        </nav>
+
+        <div class="no-results" id="noResults">
+            <p>🔍 No repositories match your search.</p>
+            <p style="margin-top: 8px; font-size: 0.9rem;">Try different keywords or clear the search.</p>
+        </div>
+
+        <footer>
+            <p>Dirshco Project Portal • <strong id="footerCount">30</strong> Repositories • Updated 2026</p>
+            <p style="margin-top: 5px; font-size: 0.85rem;">Base URL: https://dirshco.github.io/</p>
+        </footer>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">📤 Export Repositories</h3>
+                <button class="modal-close" onclick="closeExportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Choose export format. Current search filters will be applied.</p>
+                
+                <label class="export-option selected" onclick="selectExportFormat('pdf')">
+                    <input type="radio" name="exportFormat" value="pdf" checked>
+                    <div class="export-icon pdf">📄</div>
+                    <div class="export-info">
+                        <h4>Export as PDF</h4>
+                        <p>Formatted document with categories & links</p>
+                    </div>
+                </label>
+                
+                <label class="export-option" onclick="selectExportFormat('csv')">
+                    <input type="radio" name="exportFormat" value="csv">
+                    <div class="export-icon csv">📊</div>
+                    <div class="export-info">
+                        <h4>Export as CSV</h4>
+                        <p>Spreadsheet-ready data for Excel/Google Sheets</p>
+                    </div>
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeExportModal()">Cancel</button>
+                <button class="btn btn-primary" id="exportBtn" onclick="performExport()">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✓</span>
+        <span id="toastMessage">Export successful!</span>
+    </div>
+
+    <script>
+        // ==================== SEARCH FUNCTIONALITY ====================
+        const searchInput = document.getElementById('searchInput');
+        const linksGrid = document.getElementById('linksGrid');
+        const linkCards = document.querySelectorAll('.link-card');
+        const resultsCount = document.getElementById('resultsCount');
+        const noResults = document.getElementById('noResults');
+        const totalRepos = document.getElementById('totalRepos');
+        const footerCount = document.getElementById('footerCount');
+
+        function filterRepositories() {
+            const query = searchInput.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            linkCards.forEach(card => {
+                const name = card.getAttribute('data-name')?.toLowerCase() || '';
+                const category = card.getAttribute('data-category')?.toLowerCase() || '';
+                const url = card.getAttribute('data-url')?.toLowerCase() || '';
+                const title = card.querySelector('.link-title')?.textContent.toLowerCase() || '';
+                
+                const matches = name.includes(query) || category.includes(query) || 
+                               url.includes(query) || title.includes(query);
+                
+                if (matches) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            resultsCount.textContent = `Showing ${visibleCount} of ${linkCards.length} repositories`;
+            noResults.classList.toggle('show', visibleCount === 0 && query !== '');
+            return visibleCount;
+        }
+
+        searchInput.addEventListener('input', filterRepositories);
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                filterRepositories();
+                searchInput.blur();
+            }
+        });
+
+        function clearSearch() {
+            searchInput.value = '';
+            filterRepositories();
+            searchInput.focus();
+            showToast('Search cleared', 'success');
+        }
+
+        // Initialize counts
+        totalRepos.textContent = linkCards.length;
+        footerCount.textContent = linkCards.length;
+
+        // ==================== EXPORT FUNCTIONALITY ====================
+        const modal = document.getElementById('exportModal');
+        let selectedFormat = 'pdf';
+
+        function openExportModal() {
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeExportModal() {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function selectExportFormat(format) {
+            selectedFormat = format;
+            document.querySelectorAll('.export-option').forEach(opt => opt.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            document.querySelector(`input[value="${format}"]`).checked = true;
+        }
+
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeExportModal();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                closeExportModal();
+            }
+        });
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            toastMsg.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Get visible (filtered) repositories
+        function getVisibleRepos() {
+            return Array.from(linkCards)
+                .filter(card => !card.classList.contains('hidden'))
+                .map(card => ({
+                    name: card.getAttribute('data-name'),
+                    category: card.getAttribute('data-category'),
+                    url: card.getAttribute('data-url'),
+                    title: card.querySelector('.link-title')?.textContent.replace(/\s*<[^>]*>*/g, '').trim()
+                }));
+        }
+
+        // CSV Export
+        function exportToCSV(repos) {
+            const headers = ['Repository Name', 'Category', 'URL', 'Display Title'];
+            const rows = repos.map(r => [
+                `"${r.name}"`,
+                `"${r.category}"`,
+                `"${r.url}"`,
+                `"${r.title}"`
+            ]);
+            
+            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `dirshco-repos-${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // PDF Export using jsPDF
+        async function exportToPDF(repos) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Header
+            doc.setFontSize(18);
+            doc.setTextColor(102, 126, 234);
+            doc.text('Dirshco Repository Index', 14, 20);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Exported: ${new Date().toLocaleDateString()} | Total: ${repos.length} repositories`, 14, 28);
+            doc.text(`Base URL: https://dirshco.github.io/`, 14, 33);
+            
+            // Line separator
+            doc.setDrawColor(200);
+            doc.line(14, 36, 196, 36);
+            
+            // Content
+            doc.setFontSize(11);
+            doc.setTextColor(0);
+            let y = 45;
+            const pageHeight = doc.internal.pageSize.height;
+            
+            repos.forEach((repo, index) => {
+                // Page break check
+                if (y > pageHeight - 20) {
+                    doc.addPage();
+                    y = 20;
+                    doc.setFontSize(10);
+                    doc.setTextColor(100);
+                    doc.text(`Dirshco Repository Index (continued) - Page ${doc.internal.getNumberOfPages()}`, 14, 15);
+                    y = 25;
+                }
+                
+                // Repository entry
+                doc.setFontSize(10);
+                doc.setTextColor(0);
+                doc.text(`${index + 1}. ${repo.title}`, 14, y);
+                
+                doc.setFontSize(9);
+                doc.setTextColor(102, 126, 234);
+                doc.text(repo.url, 14, y + 5);
+                
+                doc.setTextColor(100);
+                doc.text(`Category: ${repo.category}`, 14, y + 10);
+                
+                y += 18;
+            });
+            
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text(`Page ${i} of ${pageCount}`, 105, pageHeight - 10, null, null, 'center');
+                doc.text('Generated by Dirshco Repository Index', 105, pageHeight - 5, null, null, 'center');
+            }
+            
+            // Save
+            doc.save(`dirshco-repos-${new Date().toISOString().slice(0,10)}.pdf`);
+        }
+
+        // Main export function
+        async function performExport() {
+            const repos = getVisibleRepos();
+            if (repos.length === 0) {
+                showToast('No repositories to export', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('exportBtn');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+
+            try {
+                if (selectedFormat === 'csv') {
+                    exportToCSV(repos);
+                    showToast(`✓ Exported ${repos.length} repos to CSV`, 'success');
+                } else {
+                    await exportToPDF(repos);
+                    showToast(`✓ Exported ${repos.length} repos to PDF`, 'success');
+                }
+                closeExportModal();
+            } catch (error) {
+                console.error('Export error:', error);
+                showToast('Export failed. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Download';
+            }
+        }
+
+        // Focus search on load
+        window.addEventListener('load', () => {
+            searchInput.focus();
+        });
+    </script>
+</body>
+</html>
