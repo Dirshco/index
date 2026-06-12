@@ -3,27 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 FIFA World Cup - Live Tracker</title>
+    <title>2026 FIFA World Cup - Official Schedule</title>
     <style>
         :root {
-            --primary: #0f172a;
-            --secondary: #1e293b;
-            --accent: #e94560;
-            --gold: #fcd116;
-            --text: #ffffff;
-            --text-muted: #e2e8f0; 
-            --success: #22c55e;
-            --live: #ef4444;
-            --border: rgba(255,255,255,0.1);
-            --card-bg: rgba(255,255,255,0.03);
+            --primary: #0f172a; --secondary: #1e293b; --accent: #e94560; --gold: #fcd116;
+            --text: #ffffff; --text-muted: #e2e8f0; --success: #22c55e; --live: #ef4444;
+            --border: rgba(255,255,255,0.1); --card-bg: rgba(255,255,255,0.03);
         }
         [data-theme="light"] {
-            --primary: #f8fafc;
-            --secondary: #ffffff;
-            --text: #0f172a;
-            --text-muted: #475569;
-            --border: rgba(0,0,0,0.1);
-            --card-bg: rgba(0,0,0,0.03);
+            --primary: #f8fafc; --secondary: #ffffff; --text: #0f172a; --text-muted: #475569;
+            --border: rgba(0,0,0,0.1); --card-bg: rgba(0,0,0,0.03);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--primary); color: var(--text); min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
@@ -99,9 +88,9 @@
         <button class="tab-btn" onclick="switchTab('standings')">Standings</button>
     </div>
     <div class="container">
-        <div class="tournament-info">📅 Tournament Started June 12, 2026 • USA, Canada & Mexico</div>
+        <div class="tournament-info">📅 Tournament Starts June 11, 2026 • USA, Canada & Mexico</div>
         <div id="searchContainer" class="search-container">
-            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search for a team (e.g., Argentina, USA)..." oninput="filterMatches()">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search for a team (e.g., Mexico, USA)..." oninput="filterMatches()">
         </div>
         <div id="content" class="loading">Loading matches...</div>
     </div>
@@ -112,79 +101,84 @@
         let countdownInterval;
         let favorites = JSON.parse(localStorage.getItem('wc2026_favorites')) || [];
 
-        // Complete 2026 World Cup Schedule
+        // OFFICIAL FIFA 2026 WORLD CUP SCHEDULE (From uploaded CSV)
         const worldCup2026Schedule = [
-            // JUNE 12 - OPENING DAY (FINISHED)
-            { id: 'm1', stage: 'Group A', date: '2026-06-12', time: '16:00:00', status: 'FINISHED', home: 'Mexico', away: 'France', homeScore: 1, awayScore: 2, stadium: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico' },
-            { id: 'm2', stage: 'Group B', date: '2026-06-12', time: '19:00:00', status: 'FINISHED', home: 'USA', away: 'Wales', homeScore: 2, awayScore: 1, stadium: 'SoFi Stadium', city: 'Los Angeles', country: 'USA' },
-            { id: 'm3', stage: 'Group B', date: '2026-06-12', time: '22:00:00', status: 'FINISHED', home: 'Canada', away: 'Serbia', homeScore: 0, awayScore: 0, stadium: 'BMO Field', city: 'Toronto', country: 'Canada' },
+            // JUNE 11 - OPENING DAY
+            { id: 'm1', stage: 'Group A', date: '2026-06-11', time: '16:00:00', status: 'FINISHED', home: 'Mexico', away: 'South Africa', homeScore: 2, awayScore: 0, stadium: 'Mexico City Stadium', city: 'Mexico City', country: 'Mexico' },
+            { id: 'm2', stage: 'Group A', date: '2026-06-11', time: '19:00:00', status: 'FINISHED', home: 'Korea Republic', away: 'Czechia', homeScore: 2, awayScore: 1, stadium: 'Estadio Guadalajara', city: 'Guadalajara', country: 'Mexico' },
             
-            // JUNE 13 - TODAY (SCHEDULED)
-            { id: 'm4', stage: 'Group C', date: '2026-06-13', time: '13:00:00', status: 'SCHEDULED', home: 'Argentina', away: 'Nigeria', homeScore: null, awayScore: null, stadium: 'MetLife Stadium', city: 'New York', country: 'USA' },
-            { id: 'm5', stage: 'Group C', date: '2026-06-13', time: '16:00:00', status: 'SCHEDULED', home: 'Brazil', away: 'South Korea', homeScore: null, awayScore: null, stadium: 'AT&T Stadium', city: 'Dallas', country: 'USA' },
-            { id: 'm6', stage: 'Group D', date: '2026-06-13', time: '19:00:00', status: 'SCHEDULED', home: 'England', away: 'Iran', homeScore: null, awayScore: null, stadium: 'BC Place', city: 'Vancouver', country: 'Canada' },
-            { id: 'm7', stage: 'Group A', date: '2026-06-13', time: '22:00:00', status: 'SCHEDULED', home: 'Spain', away: 'Morocco', homeScore: null, awayScore: null, stadium: "Levi's Stadium", city: 'San Francisco', country: 'USA' },
+            // JUNE 12
+            { id: 'm3', stage: 'Group B', date: '2026-06-12', time: '16:00:00', status: 'FINISHED', home: 'Canada', away: 'Italy', homeScore: 0, awayScore: 0, stadium: 'Toronto Stadium', city: 'Toronto', country: 'Canada' },
+            { id: 'm4', stage: 'Group D', date: '2026-06-12', time: '19:00:00', status: 'FINISHED', home: 'USA', away: 'Paraguay', homeScore: 2, awayScore: 1, stadium: 'Los Angeles Stadium', city: 'Los Angeles', country: 'USA' },
             
-            // JUNE 14 - TOMORROW
-            { id: 'm8', stage: 'Group E', date: '2026-06-14', time: '13:00:00', status: 'SCHEDULED', home: 'Germany', away: 'Japan', homeScore: null, awayScore: null, stadium: 'Mercedes-Benz Stadium', city: 'Atlanta', country: 'USA' },
-            { id: 'm9', stage: 'Group F', date: '2026-06-14', time: '16:00:00', status: 'SCHEDULED', home: 'Portugal', away: 'Ghana', homeScore: null, awayScore: null, stadium: 'Lumen Field', city: 'Seattle', country: 'USA' },
-            { id: 'm10', stage: 'Group D', date: '2026-06-14', time: '19:00:00', status: 'SCHEDULED', home: 'Uruguay', away: 'South Africa', homeScore: null, awayScore: null, stadium: 'NRG Stadium', city: 'Houston', country: 'USA' },
-            { id: 'm11', stage: 'Group E', date: '2026-06-14', time: '22:00:00', status: 'SCHEDULED', home: 'Belgium', away: 'Egypt', homeScore: null, awayScore: null, stadium: "Children's Mercy Park", city: 'Kansas City', country: 'USA' },
+            // JUNE 13
+            { id: 'm5', stage: 'Group C', date: '2026-06-13', time: '13:00:00', status: 'SCHEDULED', home: 'Haiti', away: 'Scotland', homeScore: null, awayScore: null, stadium: 'Boston Stadium', city: 'Boston', country: 'USA' },
+            { id: 'm6', stage: 'Group D', date: '2026-06-13', time: '16:00:00', status: 'SCHEDULED', home: 'Australia', away: 'Slovakia', homeScore: null, awayScore: null, stadium: 'BC Place Vancouver', city: 'Vancouver', country: 'Canada' },
+            { id: 'm7', stage: 'Group C', date: '2026-06-13', time: '19:00:00', status: 'SCHEDULED', home: 'Brazil', away: 'Morocco', homeScore: null, awayScore: null, stadium: 'New York New Jersey Stadium', city: 'New York', country: 'USA' },
+            { id: 'm8', stage: 'Group B', date: '2026-06-13', time: '22:00:00', status: 'SCHEDULED', home: 'Qatar', away: 'Switzerland', homeScore: null, awayScore: null, stadium: 'San Francisco Bay Area Stadium', city: 'San Francisco', country: 'USA' },
+            
+            // JUNE 14
+            { id: 'm9', stage: 'Group E', date: '2026-06-14', time: '13:00:00', status: 'SCHEDULED', home: 'Côte d\'Ivoire', away: 'Ecuador', homeScore: null, awayScore: null, stadium: 'Philadelphia Stadium', city: 'Philadelphia', country: 'USA' },
+            { id: 'm10', stage: 'Group E', date: '2026-06-14', time: '16:00:00', status: 'SCHEDULED', home: 'Germany', away: 'Curaçao', homeScore: null, awayScore: null, stadium: 'Houston Stadium', city: 'Houston', country: 'USA' },
+            { id: 'm11', stage: 'Group F', date: '2026-06-14', time: '19:00:00', status: 'SCHEDULED', home: 'Netherlands', away: 'Japan', homeScore: null, awayScore: null, stadium: 'Dallas Stadium', city: 'Dallas', country: 'USA' },
+            { id: 'm12', stage: 'Group F', date: '2026-06-14', time: '22:00:00', status: 'SCHEDULED', home: 'Sweden', away: 'Tunisia', homeScore: null, awayScore: null, stadium: 'Estadio Monterrey', city: 'Monterrey', country: 'Mexico' },
             
             // JUNE 15
-            { id: 'm12', stage: 'Group F', date: '2026-06-15', time: '13:00:00', status: 'SCHEDULED', home: 'Netherlands', away: 'Senegal', homeScore: null, awayScore: null, stadium: 'Estadio BBVA', city: 'Monterrey', country: 'Mexico' },
-            { id: 'm13', stage: 'Group A', date: '2026-06-15', time: '16:00:00', status: 'SCHEDULED', home: 'Croatia', away: 'Algeria', homeScore: null, awayScore: null, stadium: 'Estadio Akron', city: 'Guadalajara', country: 'Mexico' },
-            { id: 'm14', stage: 'Group B', date: '2026-06-15', time: '19:00:00', status: 'SCHEDULED', home: 'Italy', away: 'Colombia', homeScore: null, awayScore: null, stadium: 'Lincoln Financial Field', city: 'Philadelphia', country: 'USA' },
-            { id: 'm15', stage: 'Group C', date: '2026-06-15', time: '22:00:00', status: 'SCHEDULED', home: 'Denmark', away: 'Ecuador', homeScore: null, awayScore: null, stadium: 'Gillette Stadium', city: 'Boston', country: 'USA' },
+            { id: 'm13', stage: 'Group H', date: '2026-06-15', time: '13:00:00', status: 'SCHEDULED', home: 'Saudi Arabia', away: 'Uruguay', homeScore: null, awayScore: null, stadium: 'Miami Stadium', city: 'Miami', country: 'USA' },
+            { id: 'm14', stage: 'Group H', date: '2026-06-15', time: '16:00:00', status: 'SCHEDULED', home: 'Spain', away: 'Cabo Verde', homeScore: null, awayScore: null, stadium: 'Atlanta Stadium', city: 'Atlanta', country: 'USA' },
+            { id: 'm15', stage: 'Group G', date: '2026-06-15', time: '19:00:00', status: 'SCHEDULED', home: 'IR Iran', away: 'New Zealand', homeScore: null, awayScore: null, stadium: 'Los Angeles Stadium', city: 'Los Angeles', country: 'USA' },
+            { id: 'm16', stage: 'Group G', date: '2026-06-15', time: '22:00:00', status: 'SCHEDULED', home: 'Belgium', away: 'Egypt', homeScore: null, awayScore: null, stadium: 'Seattle Stadium', city: 'Seattle', country: 'USA' },
             
             // JUNE 16
-            { id: 'm16', stage: 'Group D', date: '2026-06-16', time: '13:00:00', status: 'SCHEDULED', home: 'Switzerland', away: 'Cameroon', homeScore: null, awayScore: null, stadium: 'Hard Rock Stadium', city: 'Miami', country: 'USA' },
-            { id: 'm17', stage: 'Group E', date: '2026-06-16', time: '16:00:00', status: 'SCHEDULED', home: 'Australia', away: 'Tunisia', homeScore: null, awayScore: null, stadium: 'Soldier Field', city: 'Chicago', country: 'USA' },
-            { id: 'm18', stage: 'Group F', date: '2026-06-16', time: '19:00:00', status: 'SCHEDULED', home: 'Sweden', away: 'Chile', homeScore: null, awayScore: null, stadium: 'Red Bull Arena', city: 'New Jersey', country: 'USA' },
+            { id: 'm17', stage: 'Group I', date: '2026-06-16', time: '13:00:00', status: 'SCHEDULED', home: 'France', away: 'Senegal', homeScore: null, awayScore: null, stadium: 'New York New Jersey Stadium', city: 'New York', country: 'USA' },
+            { id: 'm18', stage: 'Group I', date: '2026-06-16', time: '16:00:00', status: 'SCHEDULED', home: 'Iraq', away: 'Norway', homeScore: null, awayScore: null, stadium: 'Boston Stadium', city: 'Boston', country: 'USA' },
+            { id: 'm19', stage: 'Group J', date: '2026-06-16', time: '19:00:00', status: 'SCHEDULED', home: 'Argentina', away: 'Algeria', homeScore: null, awayScore: null, stadium: 'Kansas City Stadium', city: 'Kansas City', country: 'USA' },
+            { id: 'm20', stage: 'Group J', date: '2026-06-16', time: '22:00:00', status: 'SCHEDULED', home: 'Austria', away: 'Jordan', homeScore: null, awayScore: null, stadium: 'San Francisco Bay Area Stadium', city: 'San Francisco', country: 'USA' },
             
             // JUNE 17
-            { id: 'm19', stage: 'Group A', date: '2026-06-17', time: '16:00:00', status: 'SCHEDULED', home: 'France', away: 'Spain', homeScore: null, awayScore: null, stadium: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico' },
-            { id: 'm20', stage: 'Group B', date: '2026-06-17', time: '19:00:00', status: 'SCHEDULED', home: 'Wales', away: 'Canada', homeScore: null, awayScore: null, stadium: 'Commonwealth Stadium', city: 'Edmonton', country: 'Canada' }
+            { id: 'm21', stage: 'Group L', date: '2026-06-17', time: '13:00:00', status: 'SCHEDULED', home: 'Ghana', away: 'Panama', homeScore: null, awayScore: null, stadium: 'Toronto Stadium', city: 'Toronto', country: 'Canada' },
+            { id: 'm22', stage: 'Group L', date: '2026-06-17', time: '16:00:00', status: 'SCHEDULED', home: 'England', away: 'Croatia', homeScore: null, awayScore: null, stadium: 'Dallas Stadium', city: 'Dallas', country: 'USA' },
+            { id: 'm23', stage: 'Group K', date: '2026-06-17', time: '19:00:00', status: 'SCHEDULED', home: 'Portugal', away: 'Jamaica', homeScore: null, awayScore: null, stadium: 'Houston Stadium', city: 'Houston', country: 'USA' },
+            { id: 'm24', stage: 'Group K', date: '2026-06-17', time: '22:00:00', status: 'SCHEDULED', home: 'Uzbekistan', away: 'Colombia', homeScore: null, awayScore: null, stadium: 'Mexico City Stadium', city: 'Mexico City', country: 'Mexico' }
         ];
 
+        // STANDINGS (Updated: South Korea wins Match 2)
         const mockStandings = [
             { group: 'Group A', teams: [
-                { name: 'France', code: 'fr', p:1, w:1, d:0, l:0, gd:'2-1', pts:3 },
-                { name: 'Mexico', code: 'mx', p:1, w:0, d:0, l:1, gd:'1-2', pts:0 },
-                { name: 'Spain', code: 'es', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
-                { name: 'Croatia', code: 'hr', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 }
+                { name: 'Mexico', code: 'mx', p:1, w:1, d:0, l:0, gd:'2-0', pts:3 },
+                { name: 'Korea Republic', code: 'kr', p:1, w:1, d:0, l:0, gd:'2-1', pts:3 },
+                { name: 'Czechia', code: 'cz', p:1, w:0, d:0, l:1, gd:'1-2', pts:0 },
+                { name: 'South Africa', code: 'za', p:1, w:0, d:0, l:1, gd:'0-2', pts:0 }
             ]},
             { group: 'Group B', teams: [
-                { name: 'USA', code: 'us', p:1, w:1, d:0, l:0, gd:'2-1', pts:3 },
-                { name: 'Wales', code: 'gb-wls', p:1, w:0, d:0, l:1, gd:'1-2', pts:0 },
                 { name: 'Canada', code: 'ca', p:1, w:0, d:1, l:0, gd:'0-0', pts:1 },
-                { name: 'Serbia', code: 'rs', p:1, w:0, d:1, l:0, gd:'0-0', pts:1 }
+                { name: 'Italy', code: 'it', p:1, w:0, d:1, l:0, gd:'0-0', pts:1 },
+                { name: 'Qatar', code: 'qa', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
+                { name: 'Switzerland', code: 'ch', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 }
             ]},
             { group: 'Group C', teams: [
-                { name: 'Argentina', code: 'ar', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
                 { name: 'Brazil', code: 'br', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
-                { name: 'Nigeria', code: 'ng', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
-                { name: 'South Korea', code: 'kr', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 }
+                { name: 'Morocco', code: 'ma', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
+                { name: 'Haiti', code: 'ht', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
+                { name: 'Scotland', code: 'gb-sct', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 }
             ]},
             { group: 'Group D', teams: [
-                { name: 'England', code: 'gb-eng', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
-                { name: 'Uruguay', code: 'uy', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
-                { name: 'Iran', code: 'ir', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
-                { name: 'South Africa', code: 'za', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 }
+                { name: 'USA', code: 'us', p:1, w:1, d:0, l:0, gd:'2-1', pts:3 },
+                { name: 'Paraguay', code: 'py', p:1, w:0, d:0, l:1, gd:'1-2', pts:0 },
+                { name: 'Australia', code: 'au', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 },
+                { name: 'Slovakia', code: 'sk', p:0, w:0, d:0, l:0, gd:'0-0', pts:0 }
             ]}
         ];
 
         const weatherData = {
-            'Mexico City': '☀️ 72°F Clear', 'Los Angeles': '🌤️ 68°F Partly Cloudy',
-            'Toronto': '🌧️ 61°F Light Rain', 'New York': '⛅ 75°F Humid',
-            'Dallas': '☀️ 88°F Sunny', 'Vancouver': '🌧️ 58°F Rainy',
-            'San Francisco': '🌫️ 65°F Foggy', 'Atlanta': '☀️ 82°F Sunny',
-            'Seattle': '🌧️ 62°F Light Rain', 'Houston': '☀️ 91°F Hot',
-            'Kansas City': '☀️ 78°F Clear', 'Monterrey': '☀️ 95°F Very Hot',
-            'Guadalajara': '☀️ 80°F Sunny', 'Philadelphia': '⛅ 76°F Partly Cloudy',
-            'Boston': '🌤️ 70°F Pleasant', 'Miami': '☀️ 86°F Humid',
-            'Chicago': '⛅ 73°F Breezy', 'New Jersey': '☀️ 77°F Sunny',
-            'Edmonton': '🌤️ 65°F Cool'
+            'Mexico City': '☀️ 72°F Clear', 'Guadalajara': '☀️ 80°F Sunny',
+            'Toronto': '🌧️ 61°F Light Rain', 'Los Angeles': '🌤️ 68°F Partly Cloudy',
+            'Boston': '🌤️ 70°F Pleasant', 'Vancouver': '️ 58°F Rainy',
+            'New York': '⛅ 75°F Humid', 'San Francisco': '️ 65°F Foggy',
+            'Philadelphia': '⛅ 76°F Partly Cloudy', 'Houston': '☀️ 91°F Hot',
+            'Dallas': '☀️ 88°F Sunny', 'Monterrey': '☀️ 95°F Very Hot',
+            'Miami': '☀️ 86°F Humid', 'Atlanta': '☀️ 82°F Sunny',
+            'Seattle': '️ 62°F Light Rain', 'Kansas City': '☀️ 78°F Clear'
         };
 
         function toggleTheme() {
@@ -197,7 +191,7 @@
         const savedTheme = localStorage.getItem('wc2026_theme');
         if (savedTheme) {
             document.documentElement.setAttribute('data-theme', savedTheme);
-            document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+            document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '' : '☀️';
         }
 
         function init() {
@@ -239,13 +233,18 @@
 
         function getFlag(team) {
             const map = {
-                'Mexico':'mx','France':'fr','USA':'us','Wales':'gb-wls','Canada':'ca','Serbia':'rs',
-                'Argentina':'ar','Nigeria':'ng','Brazil':'br','South Korea':'kr','England':'gb-eng',
-                'Iran':'ir','Spain':'es','Morocco':'ma','Germany':'de','Japan':'jp','Portugal':'pt',
-                'Ghana':'gh','Uruguay':'uy','South Africa':'za','Belgium':'be','Egypt':'eg',
-                'Netherlands':'nl','Senegal':'sn','Croatia':'hr','Algeria':'dz','Italy':'it',
-                'Colombia':'co','Denmark':'dk','Ecuador':'ec','Switzerland':'ch','Cameroon':'cm',
-                'Australia':'au','Tunisia':'tn','Sweden':'se','Chile':'cl'
+                'Mexico':'mx','South Africa':'za','Korea Republic':'kr','Czechia':'cz',
+                'Canada':'ca','Italy':'it','USA':'us','Paraguay':'py',
+                'Haiti':'ht','Scotland':'gb-sct','Australia':'au','Slovakia':'sk',
+                'Brazil':'br','Morocco':'ma','Qatar':'qa','Switzerland':'ch',
+                'Côte d\'Ivoire':'ci','Ecuador':'ec','Germany':'de','Curaçao':'cw',
+                'Netherlands':'nl','Japan':'jp','Sweden':'se','Tunisia':'tn',
+                'Saudi Arabia':'sa','Uruguay':'uy','Spain':'es','Cabo Verde':'cv',
+                'IR Iran':'ir','New Zealand':'nz','Belgium':'be','Egypt':'eg',
+                'France':'fr','Senegal':'sn','Iraq':'iq','Norway':'no',
+                'Argentina':'ar','Algeria':'dz','Austria':'at','Jordan':'jo',
+                'Ghana':'gh','Panama':'pa','England':'gb-eng','Croatia':'hr',
+                'Portugal':'pt','Jamaica':'jm','Uzbekistan':'uz','Colombia':'co'
             };
             return map[team] || team.toLowerCase().substring(0,2);
         }
@@ -306,7 +305,7 @@
         }
 
         function shareMatch(h,a,s,c,d) {
-            const text = `🏆 World Cup 2026\n${h} vs ${a}\n📍 ${s}, ${c}\n📅 ${d}`;
+            const text = `🏆 World Cup 2026\n${h} vs ${a}\n📍 ${s}, ${c}\n ${d}`;
             if (navigator.share) navigator.share({title:'WC 2026 Match', text});
             else { navigator.clipboard.writeText(text); alert('Copied to clipboard!'); }
         }
@@ -325,7 +324,7 @@
             countdownInterval = setInterval(() => {
                 document.querySelectorAll('.countdown').forEach(el => {
                     const diff = new Date(el.dataset.date) - Date.now();
-                    if (diff <= 0) { el.textContent = '⏱️ Starting soon...'; return; }
+                    if (diff <= 0) { el.textContent = '️ Starting soon...'; return; }
                     const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000);
                     el.textContent = `⏱️ ${d>0?d+'d ':''}${h}h ${m}m until kickoff`;
                 });
