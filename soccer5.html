@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 World Cup Tracker</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #e94560;
+            --gold: #fcd116;
+            --text: #ffffff;
+            --text-muted: #e2e8f0; 
+            --success: #22c55e;
+            --live: #ef4444;
+            --border: rgba(255,255,255,0.1);
+            --card-bg: rgba(255,255,255,0.03);
+        }
+
+        [data-theme="light"] {
+            --primary: #f8fafc;
+            --secondary: #ffffff;
+            --text: #0f172a;
+            --text-muted: #475569;
+            --border: rgba(0,0,0,0.1);
+            --card-bg: rgba(0,0,0,0.03);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--primary); color: var(--text); min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+
+        header {
+            background-color: var(--secondary);
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 3px solid var(--gold);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        header h1 { font-size: 1.8rem; letter-spacing: 1px; }
+        header span { color: var(--gold); }
+
+        .theme-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover { background-color: var(--card-bg); transform: scale(1.1); }
+
+        .tabs { display: flex; justify-content: center; background-color: var(--secondary); padding: 0 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            background: none; border: none; color: var(--text-muted);
+            padding: 1rem 1.2rem; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--gold); border-bottom: 3px solid var(--gold); }
+
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+
+        .search-container { margin-bottom: 1.5rem; }
+        .search-input {
+            width: 100%; padding: 0.8rem 1rem; border-radius: 8px;
+            border: 1px solid var(--border); background-color: var(--secondary);
+            color: var(--text); font-size: 1rem; outline: none; transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--gold); }
+
+        .match-card {
+            background-color: var(--secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+            position: relative;
+        }
+        .match-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+
+        .fav-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .fav-btn.active { color: var(--gold); transform: scale(1.2); }
+        .fav-btn:hover { transform: scale(1.3); }
+
+        .match-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); padding-right: 2rem; }
+
+        .stage-badge { background-color: rgba(252, 209, 22, 0.15); color: var(--gold); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-scheduled { background-color: #334155; color: var(--text-muted); }
+        .status-live { background-color: var(--live); color: white; animation: pulse 1.5s infinite; }
+        .status-finished { background-color: var(--success); color: white; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        .match-teams { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: bold; }
+        .team { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
+        .team.away { justify-content: flex-end; text-align: right; }
+        .flag { width: 32px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .score { font-size: 1.5rem; color: var(--gold); padding: 0 1rem; min-width: 80px; text-align: center; font-variant-numeric: tabular-nums; }
+
+        .match-location-details {
+            display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem; color: var(--text-muted);
+            background-color: var(--card-bg); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--gold);
+        }
+        .location-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .location-row strong { color: var(--text); min-width: 80px; }
+        
+        .weather-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background-color: rgba(56, 189, 248, 0.15); color: #38bdf8;
+            padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;
+        }
+
+        .map-link { color: var(--gold); text-decoration: none; font-size: 0.85rem; margin-left: 0.5rem; }
+        .map-link:hover { text-decoration: underline; }
+
+        .match-footer { display: flex; justify-content: space-between; align-items: flex-start; border-top: 1px solid var(--border); padding-top: 0.75rem; flex-wrap: wrap; gap: 1rem; }
+        .match-datetime { 
+            background-color: var(--card-bg); 
+            padding: 0.5rem 0.75rem; 
+            border-radius: 6px; 
+            font-size: 0.9rem; 
+            color: var(--text);
+            font-weight: 600;
+        }
+        .countdown { color: var(--gold); font-weight: 600; font-size: 0.85rem; display: block; margin-top: 0.25rem;}
+
+        .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none;
+            padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+            transition: all 0.2s; white-space: nowrap; border: none; cursor: pointer;
+        }
+        .btn-highlight { background-color: #ff0000; color: white; }
+        .btn-highlight:hover { background-color: #cc0000; transform: translateY(-1px); }
+        .btn-calendar { background-color: #4285F4; color: white; }
+        .btn-calendar:hover { background-color: #3367d6; transform: translateY(-1px); }
+        .btn-share { background-color: var(--card-bg); color: var(--text); border: 1px solid var(--border); }
+        .btn-share:hover { background-color: var(--border); transform: translateY(-1px); }
+
+        .standings-container, .scorers-container { background-color: var(--secondary); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+        .section-header { background-color: rgba(252, 209, 22, 0.1); color: var(--gold); padding: 0.75rem 1rem; font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+        
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .data-table th { text-align: left; padding: 0.75rem 1rem; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+        .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .team-cell { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
+        .pts-cell { color: var(--gold); font-weight: bold; }
+
+        .loading { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 1.2rem; }
+        .api-notice { background-color: rgba(233, 69, 96, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; text-align: center; }
+
+        @media (min-width: 600px) {
+            .match-teams { font-size: 1.4rem; }
+            .score { font-size: 1.8rem; }
+            .match-footer { align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏆 FIFA World Cup <span>2026</span></h1>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('schedule')">Schedule</button>
+        <button class="tab-btn" onclick="switchTab('scores')">Live & Results</button>
+        <button class="tab-btn" onclick="switchTab('favorites')">⭐ Favorites</button>
+        <button class="tab-btn" onclick="switchTab('standings')">Standings</button>
+    </div>
+
+    <div class="container">
+        <div id="apiNotice" class="api-notice" style="display: none;">
+            ⚠️ Running in <strong>Mock Data Mode</strong>. TheSportsDB API is being used (no key required).
+        </div>
+        
+        <div id="searchContainer" class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search for a team (e.g., Argentina, USA)..." oninput="filterMatches()">
+        </div>
+
+        <div id="content" class="loading">Loading matches...</div>
+    </div>
+
+    <script>
+        // Using TheSportsDB API - NO API KEY REQUIRED!
+        const API_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
+        const USE_MOCK_DATA = false; // Set to true to use mock data instead
+
+        let currentTab = 'schedule';
+        let allMatches = [];
+        let countdownInterval;
+        let favorites = JSON.parse(localStorage.getItem('wc2026_favorites')) || [];
+
+        // Complete mock data as fallback
+        const mockMatches = [
+            {
+                idEvent: '1', 
+                strEvent: 'Mexico vs South Africa',
+                strHomeTeam: 'Mexico', 
+                strAwayTeam: 'South Africa',
+                strTimestamp: '2026-06-11 20:00:00',
+                dateEvent: '2026-06-11',
+                strTime: '20:00:00',
+                strStatus: 'Match Finished',
+                intHomeScore: '2',
+                intAwayScore: '0',
+                strVenue: 'Estadio Azteca',
+                strCity: 'Mexico City',
+                strCountry: 'Mexico',
+                strLeague: 'FIFA World Cup',
+                strSeason: '2026',
+                idHomeTeam: '133612',
+                idAwayTeam: '133613'
+            },
+            {
+                idEvent: '2', 
+                strEvent: 'South Korea vs Czechia',
+                strHomeTeam: 'South Korea', 
+                strAwayTeam: 'Czechia',
+                strTimestamp: '2026-06-12 16:00:00',
+                dateEvent: '2026-06-12',
+                strTime: '16:00:00',
+                strStatus: 'Match Finished',
+                intHomeScore: '2',
+                intAwayScore: '1',
+                strVenue: 'SoFi Stadium',
+                strCity: 'Los Angeles',
+                strCountry: 'USA',
+                strLeague: 'FIFA World Cup',
+                strSeason: '2026',
+                idHomeTeam: '133614',
+                idAwayTeam: '133615'
+            },
+            {
+                idEvent: '3', 
+                strEvent: 'USA vs Wales',
+                strHomeTeam: 'USA', 
+                strAwayTeam: 'Wales',
+                strTimestamp: '2026-06-12 20:00:00',
+                dateEvent: '2026-06-12',
+                strTime: '20:00:00',
+                strStatus: 'In Play',
+                intHomeScore: '1',
+                intAwayScore: '1',
+                strVenue: 'SoFi Stadium',
+                strCity: 'Los Angeles',
+                strCountry: 'USA',
+                strLeague: 'FIFA World Cup',
+                strSeason: '2026',
+                idHomeTeam: '133616',
+                idAwayTeam: '133617'
+            },
+            {
+                idEvent: '4', 
+                strEvent: 'Canada vs Serbia',
+                strHomeTeam: 'Canada', 
+                strAwayTeam: 'Serbia',
+                strTimestamp: '2026-06-13 16:00:00',
+                dateEvent: '2026-06-13',
+                strTime: '16:00:00',
+                strStatus: 'Not Started',
+                intHomeScore: null,
+                intAwayScore: null,
+                strVenue: 'BMO Field',
+                strCity: 'Toronto',
+                strCountry: 'Canada',
+                strLeague: 'FIFA World Cup',
+                strSeason: '2026',
+                idHomeTeam: '133618',
+                idAwayTeam: '133619'
+            },
+            {
+                idEvent: '5', 
+                strEvent: 'Argentina vs Nigeria',
+                strHomeTeam: 'Argentina', 
+                strAwayTeam: 'Nigeria',
+                strTimestamp: '2026-06-13 20:00:00',
+                dateEvent: '2026-06-13',
+                strTime: '20:00:00',
+                strStatus: 'Not Started',
+                intHomeScore: null,
+                intAwayScore: null,
+                strVenue: 'MetLife Stadium',
+                strCity: 'New York',
+                strCountry: 'USA',
+                strLeague: 'FIFA World Cup',
+                strSeason: '2026',
+                idHomeTeam: '133620',
+                idAwayTeam: '133621'
+            }
+        ];
+
+        const mockWeather = {
+            'Mexico City': '☀️ 72°F, Clear',
+            'Los Angeles': '🌤️ 68°F, Partly Cloudy',
+            'Toronto': '🌧️ 61°F, Light Rain',
+            'New York': '⛅ 75°F, Humid',
+            'Dallas': '☀️ 88°F, Sunny'
+        };
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            document.querySelector('.theme-toggle').textContent = next === 'dark' ? '🌙' : '☀️';
+            localStorage.setItem('wc2026_theme', next);
+        }
+
+        const savedTheme = localStorage.getItem('wc2026_theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        async function init() {
+            if (USE_MOCK_DATA) {
+                document.getElementById('apiNotice').style.display = 'block';
+                allMatches = mockMatches;
+                renderCurrentView();
+                startCountdowns();
+            } else {
+                try {
+                    // Try to fetch from TheSportsDB - FIFA World Cup events
+                    // Note: TheSportsDB might not have 2026 WC data yet, so we'll use mock data
+                    const response = await fetch(`${API_BASE}/lookup_all_events.php?id=4424`); // Example league ID
+                    const data = await response.json();
+                    
+                    if (data && data.events && data.events.length > 0) {
+                        allMatches = data.events;
+                    } else {
+                        // Fallback to mock data if API doesn't have 2026 WC data yet
+                        document.getElementById('apiNotice').style.display = 'block';
+                        allMatches = mockMatches;
+                    }
+                    
+                    renderCurrentView();
+                    startCountdowns();
+                } catch (error) {
+                    console.error('API Error:', error);
+                    document.getElementById('apiNotice').style.display = 'block';
+                    allMatches = mockMatches;
+                    renderCurrentView();
+                    startCountdowns();
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('searchContainer').style.display = (tab === 'standings') ? 'none' : 'block';
+            document.getElementById('searchInput').value = '';
+            renderCurrentView();
+        }
+
+        function renderCurrentView() {
+            if (currentTab === 'standings') {
+                renderStandings();
+            } else {
+                filterMatches();
+            }
+        }
+
+        function filterMatches() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            let filteredMatches = allMatches;
+
+            if (currentTab === 'scores') {
+                filteredMatches = filteredMatches.filter(m => 
+                    m.strStatus === 'In Play' || m.strStatus === 'Match Finished' || m.strStatus === 'Live'
+                );
+            } else if (currentTab === 'favorites') {
+                filteredMatches = filteredMatches.filter(m => favorites.includes(m.idEvent));
+            } else {
+                filteredMatches = [...filteredMatches].sort((a, b) => 
+                    new Date(a.strTimestamp || a.dateEvent) - new Date(b.strTimestamp || b.dateEvent)
+                );
+            }
+
+            if (searchTerm) {
+                filteredMatches = filteredMatches.filter(m => 
+                    (m.strHomeTeam || '').toLowerCase().includes(searchTerm) ||
+                    (m.strAwayTeam || '').toLowerCase().includes(searchTerm)
+                );
+            }
+
+            renderMatches(filteredMatches);
+        }
+
+        function toggleFavorite(matchId) {
+            if (favorites.includes(matchId)) {
+                favorites = favorites.filter(id => id !== matchId);
+            } else {
+                favorites.push(matchId);
+            }
+            localStorage.setItem('wc2026_favorites', JSON.stringify(favorites));
+            renderCurrentView();
+        }
+
+        async function shareMatch(match) {
+            const home = match.strHomeTeam || 'Home';
+            const away = match.strAwayTeam || 'Away';
+            const dateStr = new Date(match.strTimestamp || match.dateEvent).toLocaleString();
+            const venue = match.strVenue || 'TBA';
+            const city = match.strCity || 'TBA';
+            const text = `🏆 World Cup 2026: ${home} vs ${away}\n📅 ${dateStr}\n📍 ${venue}, ${city}`;
+            
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'World Cup Match', text: text });
+                } catch (err) { console.log('Share canceled'); }
+            } else {
+                navigator.clipboard.writeText(text);
+                alert('Match details copied to clipboard!');
+            }
+        }
+
+        function renderMatches(matchesToRender) {
+            const container = document.getElementById('content');
+            container.innerHTML = '';
+
+            if (matchesToRender.length === 0) {
+                container.innerHTML = `<div class="loading">${currentTab === 'favorites' ? 'No favorite matches saved yet. Click the ⭐ on any match!' : 'No matches found matching your search.'}</div>`;
+                return;
+            }
+
+            matchesToRender.forEach(match => {
+                const isFinished = match.strStatus === 'Match Finished' || match.strStatus === 'FT';
+                const isLive = match.strStatus === 'In Play' || match.strStatus === 'Live' || match.strStatus === 'LIVE';
+                const homeScore = (isFinished || isLive) ? (match.intHomeScore || '-') : '-';
+                const awayScore = (isFinished || isLive) ? (match.intAwayScore || '-') : '-';
+                
+                const homeName = match.strHomeTeam || 'TBD';
+                const awayName = match.strAwayTeam || 'TBD';
+                
+                const homeCode = match.idHomeTeam ? getCountryCode(homeName) : 'xx';
+                const awayCode = match.idAwayTeam ? getCountryCode(awayName) : 'xx';
+                
+                const homeFlag = `https://www.thesportsdb.com/images/media/team/badge/${homeCode}.png`;
+                const awayFlag = `https://www.thesportsdb.com/images/media/team/badge/${awayCode}.png`;
+
+                const location = {
+                    stadium: match.strVenue || 'Venue TBA',
+                    city: match.strCity || 'City TBA',
+                    country: match.strCountry || 'Country TBA'
+                };
+
+                const highlightData = isFinished ? getHighlightData(match) : null;
+                const calendarLink = !isFinished && !isLive ? getCalendarLink(match) : null;
+                const isFav = favorites.includes(match.idEvent);
+                
+                const weather = mockWeather[location.city] || '🌤️ Weather TBA';
+                const mapQuery = encodeURIComponent(`${location.stadium}, ${location.city}, ${location.country}`);
+                const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+                const matchDate = new Date(match.strTimestamp || match.dateEvent);
+                const dateStr = matchDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                const timeStr = matchDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                const card = document.createElement('div');
+                card.className = 'match-card';
+                card.innerHTML = `
+                    <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${match.idEvent}')" title="Add to Favorites">
+                        ${isFav ? '★' : '☆'}
+                    </button>
+                    <div class="match-header">
+                        <span class="stage-badge">${match.strLeague || 'FIFA World Cup'} ${match.strSeason || '2026'}</span>
+                        <span class="status-badge ${getStatusClass(match.strStatus)}">${getStatusText(match.strStatus)}</span>
+                    </div>
+                    <div class="match-teams">
+                        <div class="team home">
+                            <img src="${homeFlag}" alt="${homeName}" class="flag" onerror="this.style.display='none'">
+                            <span>${homeName}</span>
+                        </div>
+                        <div class="score">${homeScore} - ${awayScore}</div>
+                        <div class="team away">
+                            <span>${awayName}</span>
+                            <img src="${awayFlag}" alt="${awayName}" class="flag" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                    
+                    <div class="match-location-details">
+                        <div class="location-row">
+                            🏟️ <strong>Stadium:</strong> 
+                            <a href="${mapLink}" target="_blank" class="map-link">${location.stadium} ↗</a>
+                        </div>
+                        <div class="location-row">🏙️ <strong>City:</strong> ${location.city}</div>
+                        <div class="location-row">🌎 <strong>Country:</strong> ${location.country}</div>
+                        <div class="location-row"><span class="weather-badge">${weather}</span></div>
+                    </div>
+
+                    <div class="match-footer">
+                        <div>
+                            <div class="match-datetime">📅 ${dateStr}<br>⏰ ${timeStr}</div>
+                            ${(!isFinished && !isLive) ? `<span class="countdown" data-date="${match.strTimestamp || match.dateEvent}">Calculating...</span>` : ''}
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-share" onclick='shareMatch(${JSON.stringify(match).replace(/'/g, "&#39;")})'>📤 Share</button>
+                            ${calendarLink ? `<a href="${calendarLink}" target="_blank" class="btn btn-calendar">📅 Calendar</a>` : ''}
+                            ${highlightData ? `<a href="${highlightData.url}" target="_blank" class="btn btn-highlight">${highlightData.text}</a>` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function getCountryCode(teamName) {
+            const codes = {
+                'Mexico': 'mx', 'South Africa': 'za', 'South Korea': 'kr', 'Czechia': 'cz',
+                'USA': 'us', 'Wales': 'gb-wls', 'Canada': 'ca', 'Serbia': 'rs',
+                'Argentina': 'ar', 'Nigeria': 'ng', 'Brazil': 'br', 'France': 'fr'
+            };
+            return codes[teamName] || teamName.toLowerCase().substring(0, 2);
+        }
+
+        function getStatusClass(status) {
+            if (status === 'In Play' || status === 'Live' || status === 'LIVE') return 'status-live';
+            if (status === 'Match Finished' || status === 'FT') return 'status-finished';
+            return 'status-scheduled';
+        }
+
+        function getStatusText(status) {
+            if (status === 'In Play' || status === 'Live' || status === 'LIVE') return '🔴 LIVE';
+            if (status === 'Match Finished' || status === 'FT') return 'FT';
+            return 'Scheduled';
+        }
+
+        function getHighlightData(match) {
+            const year = match.strSeason || '2026';
+            const home = match.strHomeTeam || 'Home';
+            const away = match.strAwayTeam || 'Away';
+            const query = encodeURIComponent(`${home} vs ${away} ${year} World Cup goals highlights`);
+            return { url: `https://www.youtube.com/results?search_query=${query}`, text: '▶ Search Highlights' };
+        }
+
+        function getCalendarLink(match) {
+            const home = match.strHomeTeam || 'Home';
+            const away = match.strAwayTeam || 'Away';
+            const title = encodeURIComponent(`${home} vs ${away} - World Cup 2026`);
+            const location = encodeURIComponent(`${match.strVenue || 'Stadium'}, ${match.strCity || 'City'}`);
+            const startDate = new Date(match.strTimestamp || match.dateEvent);
+            const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000));
+            const formatCalDate = (d) => d.toISOString().replace(/-|:|\.\d+/g, "");
+            return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatCalDate(startDate)}/${formatCalDate(endDate)}&details=World%20Cup%202026%20Match&location=${location}&sf=true&output=xml`;
+        }
+
+        function renderStandings() {
+            const container = document.getElementById('content');
+            container.innerHTML = '<div class="loading">Standings will be available once matches begin. Check back soon!</div>';
+        }
+
+        function startCountdowns() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                document.querySelectorAll('.countdown').forEach(el => {
+                    const targetDate = new Date(el.getAttribute('data-date')).getTime();
+                    const distance = targetDate - new Date().getTime();
+                    if (distance < 0) { el.innerHTML = "⏱️ Starting soon..."; return; }
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    let timeString = days > 0 ? `${days}d ` : "";
+                    timeString += `${hours}h ${minutes}m until kickoff`;
+                    el.innerHTML = `⏱️ ${timeString}`;
+                });
+            }, 1000);
+        }
+
+        init();
+        setInterval(() => { if (currentTab === 'scores' && !USE_MOCK_DATA) init(); }, 60000);
+    </script>
+</body>
+</html>
