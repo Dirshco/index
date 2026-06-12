@@ -190,7 +190,8 @@
         // Get a FREE API key at: https://www.football-data.org/client/register
         const API_KEY = '2d31c2c2918a4c679b92714a6d447f8d'; 
         const API_URL = 'https://api.football-data.org/v4/competitions/WC/matches';
-        
+        // ADD THIS LINE: This wraps your API URL in a proxy to bypass the file:// restriction
+        const PROXY_URL = 'https://corsproxy.io/?url=' + encodeURIComponent(API_URL);
         // Set to false once you add a real API key above
         const USE_MOCK_DATA = false; 
         let currentTab = 'schedule';
