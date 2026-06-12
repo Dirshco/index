@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 World Cup Tracker</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #e94560;
+            --gold: #fcd116;
+            --text: #ffffff;
+            --text-muted: #e2e8f0; /* Bright, crisp light gray */
+            --success: #22c55e;
+            --live: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { background-color: var(--primary); color: var(--text); min-height: 100vh; }
+
+        header {
+            background-color: var(--secondary);
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 3px solid var(--gold);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        header h1 { font-size: 1.8rem; letter-spacing: 1px; }
+        header span { color: var(--gold); }
+
+        .tabs { display: flex; justify-content: center; background-color: var(--secondary); padding: 0 1rem; }
+        .tab-btn {
+            background: none; border: none; color: #94a3b8;
+            padding: 1rem 2rem; font-size: 1rem; font-weight: 600;
+            cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--gold); border-bottom: 3px solid var(--gold); }
+
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+
+        .match-card {
+            background-color: var(--secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.2s;
+        }
+        .match-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .stage-badge {
+            background-color: rgba(252, 209, 22, 0.15);
+            color: var(--gold);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-scheduled { background-color: #334155; color: var(--text-muted); }
+        .status-live { background-color: var(--live); color: white; animation: pulse 1.5s infinite; }
+        .status-finished { background-color: var(--success); color: white; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        .match-teams {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .team { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
+        .team.away { justify-content: flex-end; text-align: right; }
+        
+        .flag { width: 32px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        
+        .score {
+            font-size: 1.5rem;
+            color: var(--gold);
+            padding: 0 1rem;
+            min-width: 80px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .match-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .countdown { color: var(--gold); font-weight: 600; font-size: 0.9rem; }
+
+        .highlight-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #ff0000;
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .highlight-btn:hover { background-color: #cc0000; }
+
+        .loading { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 1.2rem; }
+        .api-notice {
+            background-color: rgba(233, 69, 96, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        @media (min-width: 600px) {
+            .match-teams { font-size: 1.4rem; }
+            .score { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏆 FIFA World Cup <span>2026</span></h1>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('schedule')">Full Schedule</button>
+        <button class="tab-btn" onclick="switchTab('scores')">Live & Results</button>
+    </div>
+
+    <div class="container">
+        <div id="apiNotice" class="api-notice" style="display: none;">
+            ⚠️ Running in <strong>Mock Data Mode</strong>. Add your free API key in the JavaScript to fetch real live data.
+        </div>
+        <div id="content" class="loading">Loading matches...</div each>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        const API_KEY = '2d31c2c2918a4c679b92714a6d447f8d'; 
+        const API_URL = 'https://api.football-data.org/v4/competitions/WC/matches';
+        const PROXY_URL = 'https://corsproxy.io/?url=' + encodeURIComponent(API_URL);
+        
+        const USE_MOCK_DATA = false; 
+
+        let currentTab = 'schedule';
+        let allMatches = [];
+        let countdownInterval;
+
+        // ==========================================
+        // MOCK DATA (Enhanced with Flags & Stages)
+        // ==========================================
+        const mockMatches = [
+            {
+                id: 1, stage: 'Group A',
+                utcDate: '2026-06-11T20:00:00Z', status: 'FINISHED',
+                homeTeam: { name: 'Mexico', countryCode: 'mx' },
+                awayTeam: { name: 'France', countryCode: 'fr' },
+                score: { fullTime: { home: 1, away: 2 } },
+                venue: 'Estadio Azteca, Mexico City'
+            },
+            {
+                id: 2, stage: 'Group B',
+                utcDate: '2026-06-12T16:00:00Z', status: 'LIVE',
+                homeTeam: { name: 'USA', countryCode: 'us' },
+                awayTeam: { name: 'Wales', countryCode: 'gb-wls' },
+                score: { fullTime: { home: 1, away: 1 } },
+                venue: 'SoFi Stadium, Los Angeles'
+            },
+            {
+                id: 3, stage: 'Group B',
+                utcDate: '2026-06-12T20:00:00Z', status: 'SCHEDULED',
+                homeTeam: { name: 'Canada', countryCode: 'ca' },
+                awayTeam: { name: 'Serbia', countryCode: 'rs' },
+                score: { fullTime: { home: null, away: null } },
+                venue: 'BMO Field, Toronto'
+            },
+            {
+                id: 4, stage: 'Group C',
+                utcDate: '2026-06-13T16:00:00Z', status: 'SCHEDULED',
+                homeTeam: { name: 'Argentina', countryCode: 'ar' },
+                awayTeam: { name: 'Nigeria', countryCode: 'ng' },
+                score: { fullTime: { home: null, away: null } },
+                venue: 'MetLife Stadium, New York'
+            },
+            {
+                id: 5, stage: 'Group C',
+                utcDate: '2026-06-13T20:00:00Z', status: 'SCHEDULED',
+                homeTeam: { name: 'Brazil', countryCode: 'br' },
+                awayTeam: { name: 'South Korea', countryCode: 'kr' },
+                score: { fullTime: { home: null, away: null } },
+                venue: 'AT&T Stadium, Dallas'
+            }
+        ];
+
+        // ==========================================
+        // APP LOGIC
+        // ==========================================
+
+        async function init() {
+            if (USE_MOCK_DATA) {
+                document.getElementById('apiNotice').style.display = 'block';
+                allMatches = mockMatches;
+                renderMatches();
+                startCountdowns();
+            } else {
+                try {
+                    const response = await fetch(PROXY_URL, {
+                        headers: { 'X-Auth-Token': API_KEY }
+                    });
+                    if (!response.ok) throw new Error('API request failed');
+                    const data = await response.json();
+                    allMatches = data.matches;
+                    renderMatches();
+                    startCountdowns();
+                } catch (error) {
+                    document.getElementById('content').innerHTML = 
+                        `<p style="color: var(--accent); text-align: center;">Error loading data.<br>${error.message}</p>`;
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderMatches();
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+            });
+        }
+
+        function getStatusClass(status) {
+            if (status === 'LIVE' || status === 'IN_PLAY' || status === 'PAUSED') return 'status-live';
+            if (status === 'FINISHED') return 'status-finished';
+            return 'status-scheduled';
+        }
+
+        function getStatusText(status) {
+            if (status === 'LIVE' || status === 'IN_PLAY') return '🔴 LIVE';
+            if (status === 'FINISHED') return 'FT';
+            return 'Scheduled';
+        }
+
+        // Generate a smart YouTube search link for highlights
+        function getHighlightLink(home, away, date) {
+            const year = new Date(date).getFullYear();
+            const query = encodeURIComponent(`${home} vs ${away} World Cup ${year} highlights`);
+            return `https://www.youtube.com/results?search_query=${query}`;
+        }
+
+        function renderMatches() {
+            const container = document.getElementById('content');
+            container.innerHTML = '';
+
+            let filteredMatches = allMatches;
+            if (currentTab === 'scores') {
+                filteredMatches = allMatches.filter(m => m.status === 'LIVE' || m.status === 'FINISHED' || m.status === 'IN_PLAY');
+            } else {
+                filteredMatches = [...allMatches].sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+            }
+
+            if (filteredMatches.length === 0) {
+                container.innerHTML = '<div class="loading">No matches found for this view.</div>';
+                return;
+            }
+
+            filteredMatches.forEach(match => {
+                const isLiveOrFinished = match.status === 'LIVE' || match.status === 'FINISHED' || match.status === 'IN_PLAY';
+                const homeScore = isLiveOrFinished ? match.score.fullTime.home : '-';
+                const awayScore = isLiveOrFinished ? match.score.fullTime.away : '-';
+                
+                // Fallback for country codes if using real API without them
+                const homeCode = match.homeTeam.countryCode || match.homeTeam.name.toLowerCase().substring(0, 2);
+                const awayCode = match.awayTeam.countryCode || match.awayTeam.name.toLowerCase().substring(0, 2);
+                const homeFlag = `https://flagcdn.com/w40/${homeCode}.png`;
+                const awayFlag = `https://flagcdn.com/w40/${awayCode}.png`;
+
+                const highlightLink = match.status === 'FINISHED' 
+                    ? getHighlightLink(match.homeTeam.name, match.awayTeam.name, match.utcDate) 
+                    : null;
+
+                const card = document.createElement('div');
+                card.className = 'match-card';
+                card.innerHTML = `
+                    <div class="match-header">
+                        <span class="stage-badge">${match.stage || 'Group Stage'}</span>
+                        <span class="status-badge ${getStatusClass(match.status)}">${getStatusText(match.status)}</span>
+                    </div>
+                    <div class="match-teams">
+                        <div class="team home">
+                            <img src="${homeFlag}" alt="${match.homeTeam.name}" class="flag" onerror="this.style.display='none'">
+                            <span>${match.homeTeam.name}</span>
+                        </div>
+                        <div class="score">${homeScore} - ${awayScore}</div>
+                        <div class="team away">
+                            <span>${match.awayTeam.name}</span>
+                            <img src="${awayFlag}" alt="${match.awayTeam.name}" class="flag" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                    <div class="match-footer">
+                        <div>
+                            📍 ${match.venue || 'Location TBA'}
+                            ${match.status === 'SCHEDULED' ? `<br><span class="countdown" data-date="${match.utcDate}">Calculating...</span>` : ''}
+                        </div>
+                        ${highlightLink ? `<a href="${highlightLink}" target="_blank" class="highlight-btn">▶ Watch Highlights</a>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function startCountdowns() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                document.querySelectorAll('.countdown').forEach(el => {
+                    const targetDate = new Date(el.getAttribute('data-date')).getTime();
+                    const now = new Date().getTime();
+                    const distance = targetDate - now;
+
+                    if (distance < 0) {
+                        el.innerHTML = "Starting soon...";
+                        return;
+                    }
+
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+                    let timeString = "";
+                    if (days > 0) timeString += `${days}d `;
+                    timeString += `${hours}h ${minutes}m until kickoff`;
+                    
+                    el.innerHTML = `⏱️ ${timeString}`;
+                });
+            }, 1000); // Update every second
+        }
+
+        // Initialize app
+        init();
+
+        // Auto-refresh every 60 seconds if on the scores tab and using real API
+        setInterval(() => {
+            if (currentTab === 'scores' && !USE_MOCK_DATA) {
+                init();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>
