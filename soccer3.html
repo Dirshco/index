@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 World Cup Tracker</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #e94560;
+            --gold: #fcd116;
+            --text: #ffffff;
+            --text-muted: #e2e8f0; 
+            --success: #22c55e;
+            --live: #ef4444;
+            --border: rgba(255,255,255,0.1);
+            --card-bg: rgba(255,255,255,0.03);
+        }
+
+        /* Light Mode Overrides */
+        [data-theme="light"] {
+            --primary: #f8fafc;
+            --secondary: #ffffff;
+            --text: #0f172a;
+            --text-muted: #475569;
+            --border: rgba(0,0,0,0.1);
+            --card-bg: rgba(0,0,0,0.03);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--primary); color: var(--text); min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+
+        header {
+            background-color: var(--secondary);
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 3px solid var(--gold);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        header h1 { font-size: 1.8rem; letter-spacing: 1px; }
+        header span { color: var(--gold); }
+
+        /* NEW: Theme Toggle */
+        .theme-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover { background-color: var(--card-bg); transform: scale(1.1); }
+
+        .tabs { display: flex; justify-content: center; background-color: var(--secondary); padding: 0 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            background: none; border: none; color: var(--text-muted);
+            padding: 1rem 1.2rem; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--gold); border-bottom: 3px solid var(--gold); }
+
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+
+        .search-container { margin-bottom: 1.5rem; }
+        .search-input {
+            width: 100%; padding: 0.8rem 1rem; border-radius: 8px;
+            border: 1px solid var(--border); background-color: var(--secondary);
+            color: var(--text); font-size: 1rem; outline: none; transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--gold); }
+
+        .match-card {
+            background-color: var(--secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+            position: relative;
+        }
+        .match-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+
+        /* NEW: Favorite Star Button */
+        .fav-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .fav-btn.active { color: var(--gold); transform: scale(1.2); }
+        .fav-btn:hover { transform: scale(1.3); }
+
+        .match-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); padding-right: 2rem; }
+
+        .stage-badge { background-color: rgba(252, 209, 22, 0.15); color: var(--gold); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-scheduled { background-color: #334155; color: var(--text-muted); }
+        .status-live { background-color: var(--live); color: white; animation: pulse 1.5s infinite; }
+        .status-finished { background-color: var(--success); color: white; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        .match-teams { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: bold; }
+        .team { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
+        .team.away { justify-content: flex-end; text-align: right; }
+        .flag { width: 32px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .score { font-size: 1.5rem; color: var(--gold); padding: 0 1rem; min-width: 80px; text-align: center; font-variant-numeric: tabular-nums; }
+
+        .match-location-details {
+            display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem; color: var(--text-muted);
+            background-color: var(--card-bg); padding: 0.75rem; border-radius: 8px; border-left: 3px solid var(--gold);
+        }
+        .location-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .location-row strong { color: var(--text); min-width: 70px; }
+        
+        /* NEW: Weather Badge */
+        .weather-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background-color: rgba(56, 189, 248, 0.15); color: #38bdf8;
+            padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;
+        }
+
+        .map-link { color: var(--gold); text-decoration: none; font-size: 0.85rem; margin-left: 0.5rem; }
+        .map-link:hover { text-decoration: underline; }
+
+        .match-footer { display: flex; justify-content: space-between; align-items: flex-start; border-top: 1px solid var(--border); padding-top: 0.75rem; flex-wrap: wrap; gap: 1rem; }
+        .countdown { color: var(--gold); font-weight: 600; font-size: 0.9rem; display: block; margin-top: 0.5rem;}
+
+        .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none;
+            padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+            transition: all 0.2s; white-space: nowrap; border: none; cursor: pointer;
+        }
+        .btn-highlight { background-color: #ff0000; color: white; }
+        .btn-highlight:hover { background-color: #cc0000; transform: translateY(-1px); }
+        .btn-calendar { background-color: #4285F4; color: white; }
+        .btn-calendar:hover { background-color: #3367d6; transform: translateY(-1px); }
+        .btn-share { background-color: var(--card-bg); color: var(--text); border: 1px solid var(--border); }
+        .btn-share:hover { background-color: var(--border); transform: translateY(-1px); }
+
+        /* Standings & Top Scorers */
+        .standings-container, .scorers-container { background-color: var(--secondary); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+        .section-header { background-color: rgba(252, 209, 22, 0.1); color: var(--gold); padding: 0.75rem 1rem; font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+        
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .data-table th { text-align: left; padding: 0.75rem 1rem; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+        .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .team-cell { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
+        .pts-cell { color: var(--gold); font-weight: bold; }
+
+        .loading { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 1.2rem; }
+        .api-notice { background-color: rgba(233, 69, 96, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; text-align: center; }
+
+        @media (min-width: 600px) {
+            .match-teams { font-size: 1.4rem; }
+            .score { font-size: 1.8rem; }
+            .match-footer { align-items: center; }
+        }
+   4. **Golden Boot Tracker**: A compact "Top Scorers" widget integrated into the Standings tab.
+5. 📤 **Native Share Button**: A "Share" button that uses your phone/computer's native sharing menu (WhatsApp, Messages, etc.) to send match details to friends.
+6. 🌙/☀️ **Dark/Light Mode Toggle**: A button in the header to instantly switch between the sleek dark theme and a clean, bright light theme.
+
+### Copy and paste this entire block into your `index.html` file:
+
+```html
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 World Cup Tracker</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #e94560;
+            --gold: #fcd116;
+            --text: #ffffff;
+            --text-muted: #e2e8f0; 
+            --success: #22c55e;
+            --live: #ef4444;
+            --border: rgba(255,255,255,0.1);
+            --card-bg: rgba(255,255,255,0.03);
+        }
+
+        /* Light Mode Overrides */
+        [data-theme="light"] {
+            --primary: #f8fafc;
+            --secondary: #ffffff;
+            --text: #0f172a;
+            --text-muted: #475569;
+            --border: rgba(0,0,0,0.1);
+            --card-bg: rgba(0,0,0,0.03);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--primary); color: var(--text); min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+
+        header {
+            background-color: var(--secondary);
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 3px solid var(--gold);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        header h1 { font-size: 1.8rem; letter-spacing: 1px; }
+        header span { color: var(--gold); }
+
+        /* NEW: Theme Toggle */
+        .theme-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover { background-color: var(--card-bg); transform: scale(1.1); }
+
+        .tabs { display: flex; justify-content: center; background-color: var(--secondary); padding: 0 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            background: none; border: none; color: var(--text-muted);
+            padding: 1rem 1.2rem; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--gold); border-bottom: 3px solid var(--gold); }
+
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+
+        .search-container { margin-bottom: 1.5rem; }
+        .search-input {
+            width: 100%; padding: 0.8rem 1rem; border-radius: 8px;
+            border: 1px solid var(--border); background-color: var(--secondary);
+            color: var(--text); font-size: 1rem; outline: none; transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--gold); }
+
+        .match-card {
+            background-color: var(--secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+            position: relative;
+        }
+        .match-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+
+        /* NEW: Favorite Star Button */
+        .fav-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .fav-btn.active { color: var(--gold); transform: scale(1.2); }
+        .fav-btn:hover { transform: scale(1.3); }
+
+        .match-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); padding-right: 2rem; }
+
+        .stage-badge { background-color: rgba(252, 209, 22, 0.15); color: var(--gold); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-scheduled { background-color: #334155; color: var(--text-muted); }
+        .status-live { background-color: var(--live); color: white; animation: pulse 1.5s infinite; }
+        .status-finished { background-color: var(--success); color: white; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        .match-teams { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: bold; }
+        .team { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
+        .team.away { justify-content: flex-end; text-align: right; }
+        .flag { width: 32px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .score { font-size: 1.5rem; color: var(--gold); padding: 0 1rem; min-width: 80px; text-align: center; font-variant-numeric: tabular-nums; }
+
+        .match-location-details {
+            display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem; color: var(--text-muted);
+            background-color: var(--card-bg); padding: 0.75rem; border-radius: 8px; border-left: 3px solid var(--gold);
+        }
+        .location-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .location-row strong { color: var(--text); min-width: 70px; }
+        
+        /* NEW: Weather Badge */
+        .weather-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background-color: rgba(56, 189, 248, 0.15); color: #38bdf8;
+            padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;
+        }
+
+        .map-link { color: var(--gold); text-decoration: none; font-size: 0.85rem; margin-left: 0.5rem; }
+        .map-link:hover { text-decoration: underline; }
+
+        .match-footer { display: flex; justify-content: space-between; align-items: flex-start; border-top: 1px solid var(--border); padding-top: 0.75rem; flex-wrap: wrap; gap: 1rem; }
+        .countdown { color: var(--gold); font-weight: 600; font-size: 0.9rem; display: block; margin-top: 0.5rem;}
+
+        .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none;
+            padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+            transition: all 0.2s; white-space: nowrap; border: none; cursor: pointer;
+        }
+        .btn-highlight { background-color: #ff0000; color: white; }
+        .btn-highlight:hover { background-color: #cc0000; transform: translateY(-1px); }
+        .btn-calendar { background-color: #4285F4; color: white; }
+        .btn-calendar:hover { background-color: #3367d6; transform: translateY(-1px); }
+        .btn-share { background-color: var(--card-bg); color: var(--text); border: 1px solid var(--border); }
+        .btn-share:hover { background-color: var(--border); transform: translateY(-1px); }
+
+        /* Standings & Top Scorers */
+        .standings-container, .scorers-container { background-color: var(--secondary); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+        .section-header { background-color: rgba(252, 209, 22, 0.1); color: var(--gold); padding: 0.75rem 1rem; font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+        
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .data-table th { text-align: left; padding: 0.75rem 1rem; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+        .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .team-cell { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
+        .pts-cell { color: var(--gold); font-weight: bold; }
+
+        .loading { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 1.2rem; }
+        .api-notice { background-color: rgba(233, 69, 96, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; text-align: center; }
+
+        @media (min-width: 600px) {
+            .match-teams { font-size: 1.4rem; }
+            .score { font-size: 1.8rem; }
+            .match-footer { align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏆 FIFA World Cup <span>2026</span></h1>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('schedule')">Schedule</button>
+        <button class="tab-btn" onclick="switchTab('scores')">Live & Results</button>
+        <button class="tab-btn" onclick="switchTab('favorites')">⭐ Favorites</button>
+        <button class="tab-btn" onclick="switchTab('standings')">Standings</button>
+    </div>
+
+    <div class="container">
+        <div id="apiNotice" class="api-notice" style="display: none;">
+            ⚠️ Running in <strong>Mock Data Mode</strong>. Add your free API key in the JavaScript to fetch real live data.
+        </div>
+        
+        <div id="searchContainer" class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search for a team (e.g., Argentina, USA)..." oninput="filterMatches()">
+        </div>
+
+        <div id="content" class="loading">Loading matches...</div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        const API_KEY = '2d31c2c2918a4c679b92714a6d447f8d'; 
+        const API_URL = 'https://api.football-data.org/v4/competitions/WC/matches';
+        const PROXY_URL = 'https://corsproxy.io/?url=' + encodeURIComponent(API_URL);
+        const USE_MOCK_DATA = false ; 
+
+        let currentTab = 'schedule';
+        let allMatches = [];
+        let countdownInterval;
+        let favorites = JSON.parse(localStorage.getItem('wc2026_favorites')) || [];
+
+        // ==========================================
+        // MOCK DATA
+        // ==========================================
+        const mockMatches = [
+            {
+                id: 1, stage: 'Group A',
+                utcDate: '2026-06-11T20:00:00Z', status: 'FINISHED',
+                homeTeam: { name: 'Mexico', countryCode: 'mx' },
+                awayTeam: { name: 'France', countryCode: 'fr' },
+                score: { fullTime: { home: 1, away: 2 } },
+                stadium: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico',
+                highlightUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' 
+            },
+            {
+                id: 2, stage: 'Group B',
+                utcDate: '2026-06-12T16:00:00Z', status: 'LIVE',
+                homeTeam: { name: 'USA', countryCode: 'us' },
+                awayTeam: { name: 'Wales', countryCode: 'gb-wls' },
+                score: { fullTime: { home: 1, away: 1 } },
+                stadium: 'SoFi Stadium', city: 'Los Angeles', country: 'USA'
+            },
+            {
+                id: 3, stage: 'Group B',
+                utcDate: '2026-06-12T20:00:00Z', status: 'SCHEDULED',
+                homeTeam: { name: 'Canada', countryCode: 'ca' },
+                awayTeam: { name: 'Serbia', countryCode: 'rs' },
+                score: { fullTime: { home: null, away: null } },
+                stadium: 'BMO Field', city: 'Toronto', country: 'Canada'
+            },
+            {
+                id: 4, stage: 'Group C',
+                utcDate: '2026-06-13T16:00:00Z', status: 'SCHEDULED',
+                homeTeam: { name: 'Argentina', countryCode: 'ar' },
+                awayTeam: { name: 'Nigeria', countryCode: 'ng' },
+                score: { fullTime: { home: null, away: null } },
+                stadium: 'MetLife Stadium', city: 'New York', country: 'USA'
+            },
+            {
+                id: 5, stage: 'Group C',
+                utcDate: '2026-06-13T20:00:00Z', status: 'SCHEDULED',
+                homeTeam: { name: 'Brazil', countryCode: 'br' },
+                awayTeam: { name: 'South Korea', countryCode: 'kr' },
+                score: { fullTime: { home: null, away: null } },
+                stadium: 'AT&T Stadium', city: 'Dallas', country: 'USA'
+            }
+        ];
+
+        const mockStandings = [
+            {
+                group: 'Group A',
+                teams: [
+                    { name: 'France', code: 'fr', played: 1, won: 1, drawn: 0, lost: 0, gf: 2, ga: 1, pts: 3 },
+                    { name: 'Mexico', code: 'mx', played: 1, won: 0, drawn: 0, lost: 1, gf: 1, ga: 2, pts: 0 }
+                ]
+            },
+            {
+                group: 'Group B',
+                teams: [
+                    { name: 'USA', code: 'us', played: 1, won: 0, drawn: 1, lost: 0, gf: 1, ga: 1, pts: 1 },
+                    { name: 'Wales', code: 'gb-wls', played: 1, won: 0, drawn: 1, lost: 0, gf: 1, ga: 1, pts: 1 },
+                    { name: 'Canada', code: 'ca', played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, pts: 0 },
+                    { name: 'Serbia', code: 'rs', played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, pts: 0 }
+                ]
+            }
+        ];
+
+        // NEW: Mock Top Scorers
+        const mockTopScorers = [
+            { rank: 1, name: 'Kylian Mbappé', country: 'France', code: 'fr', goals: 2, assists: 1 },
+            { rank: 2, name: 'Christian Pulisic', country: 'USA', code: 'us', goals: 1, assists: 1 },
+            { rank: 2, name: 'Gareth Bale', country: 'Wales', code: 'gb-wls', goals: 1, assists: 0 },
+            { rank: 4, name: 'Hirving Lozano', country: 'Mexico', code: 'mx', goals: 1, assists: 0 }
+        ];
+
+        // NEW: Mock Weather Data
+        const mockWeather = {
+            'Mexico City': '☀️ 72°F, Clear',
+            'Los Angeles': '🌤️ 68°F, Partly Cloudy',
+            'Toronto': '🌧️ 61°F, Light Rain',
+            'New York': '⛅ 75°F, Humid',
+            'Dallas': '☀️ 88°F, Sunny'
+        };
+
+        // ==========================================
+        // APP LOGIC
+        // ==========================================
+
+        // NEW: Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            document.querySelector('.theme-toggle').textContent = next === 'dark' ? '🌙' : '☀️';
+            localStorage.setItem('wc2026_theme', next);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('wc2026_theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '🌙' : ' “☀️';
+        }
+
+        async function init() {
+            if (USE_MOCK_DATA) {
+                document.getElementById('apiNotice').style.display = 'block';
+                allMatches = mockMatches;
+                renderCurrentView();
+                startCountdowns();
+            } else {
+                try {
+                    const response = await fetch(PROXY_URL, { headers: { 'X-Auth-Token': API_KEY } });
+                    if (!response.ok) throw new Error('API request failed');
+                    const data = await response.json();
+                    allMatches = data.matches;
+                    renderCurrentView();
+                    startCountdowns();
+                } catch (error) {
+                    document.getElementById('content').innerHTML = 
+                        `<p style="color: var(--accent); text-align: center;">Error loading data.<br>${error.message}</p>`;
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('searchContainer').style.display = (tab === 'standings') ? 'none' : 'block';
+            document.getElementById('searchInput').value = '';
+            renderCurrentView();
+        }
+
+        function renderCurrentView() {
+            if (currentTab === 'standings') {
+                renderStandings();
+            } else {
+                filterMatches();
+            }
+        }
+
+        function filterMatches() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            let filteredMatches = allMatches;
+
+            if (currentTab === 'scores') {
+                filteredMatches = filteredMatches.filter(m => m.status === 'LIVE' || m.status === 'FINISHED' || m.status === 'IN_PLAY');
+            } else if (currentTab === 'favorites') {
+                filteredMatches = filteredMatches.filter(m => favorites.includes(m.id));
+            } else {
+                filteredMatches = [...filteredMatches].sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+            }
+
+            if (searchTerm) {
+                filteredMatches = filteredMatches.filter(m => 
+                    (m.homeTeam?.name || '').toLowerCase().includes(searchTerm) ||
+                    (m.awayTeam?.name || '').toLowerCase().includes(searchTerm)
+                );
+            }
+
+            renderMatches(filteredMatches);
+        }
+
+        // NEW: Favorite Toggle
+        function toggleFavorite(matchId) {
+            if (favorites.includes(matchId)) {
+                favorites = favorites.filter(id => id !== matchId);
+            } else {
+                favorites.push(matchId);
+            }
+            localStorage.setItem('wc2026_favorites', JSON.stringify(favorites));
+            renderCurrentView(); // Re-render to update star icon
+        }
+
+        // NEW: Share Function
+        async function shareMatch(match) {
+            const home = match.homeTeam?.name || 'Home';
+            const away = match.awayTeam?.name || 'Away';
+            const text = `🏆 World Cup 2026: ${home} vs ${away}\n📍 ${match.stadium || 'TBA'}, ${match.city || 'TBA'}\n📅 ${new Date(match.utcDate).toLocaleString()}`;
+            
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'World Cup Match', text: text });
+                } catch (err) { console.log('Share canceled'); }
+            } else {
+                navigator.clipboard.writeText(text);
+                alert('Match details copied to clipboard!');
+            }
+        }
+
+        function renderMatches(matchesToRender) {
+            const container = document.getElementById('content');
+            container.innerHTML = '';
+
+            if (matchesToRender.length === 0) {
+                container.innerHTML = `<div class="loading">${currentTab === 'favorites' ? 'No favorite matches saved yet. Click the ⭐ on any match!' : 'No matches found matching your search.'}</div>`;
+                return;
+            }
+
+            matchesToRender.forEach(match => {
+                const isLiveOrFinished = match.status === 'LIVE' || match.status === 'FINISHED' || match.status === 'IN_PLAY';
+                const homeScore = isLiveOrFinished ? (match.score?.fullTime?.home ?? '-') : '-';
+                const awayScore = isLiveOrFinished ? (match.score?.fullTime?.away ?? '-') : '-';
+                
+                const homeName = match.homeTeam?.name || 'TBD';
+                const awayName = match.awayTeam?.name || 'TBD';
+                
+                const homeCode = match.homeTeam?.countryCode || (typeof homeName === 'string' ? homeName.toLowerCase().substring(0, 2) : 'xx');
+                const awayCode = match.awayTeam?.countryCode || (typeof awayName === 'string' ? awayName.toLowerCase().substring(0, 2) : 'xx');
+                
+                const homeFlag = `https://flagcdn.com/w40/${homeCode}.png`;
+                const awayFlag = `https://flagcdn.com/w40/${awayCode}.png`;
+
+                const location = getLocationDetails(match);
+                const highlightData = match.status === 'FINISHED' ? getHighlightData(match) : null;
+                const calendarLink = match.status === 'SCHEDULED' ? getCalendarLink(match) : null;
+                const isFav = favorites.includes(match.id);
+                
+                // Get weather or fallback
+                const weather = mockWeather[location.city] || '🌤️ Weather TBA';
+                const mapQuery = encodeURIComponent(`${location.stadium}, ${location.city}, ${location.country}`);
+                const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+                const card = document.createElement('div');
+                card.className = 'match-card';
+                card.innerHTML = `
+                    <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${match.id})" title="Add to Favorites">
+                        ${isFav ? '★' : '☆'}
+                    </button>
+                    <div class="match-header">
+                        <span class="stage-badge">${match.stage || 'Group Stage'}</span>
+                        <span class="status-badge ${getStatusClass(match.status)}">${getStatusText(match.status)}</span>
+                    </div>
+                    <div class="match-teams">
+                        <div class="team home">
+                            <img src="${homeFlag}" alt="${homeName}" class="flag" onerror="this.style.display='none'">
+                            <span>${homeName}</span>
+                        </div>
+                        <div class="score">${homeScore} - ${awayScore}</div>
+                        <div class="team away">
+                            <span>${awayName}</span>
+                            <img src="${awayFlag}" alt="${awayName}" class="flag" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                    
+                    <div class="match-location-details">
+                        <div class="location-row">
+                            🏟️ <strong>Stadium:</strong> 
+                            <a href="${mapLink}" target="_blank" class="map-link">${location.stadium} ↗</a>
+                        </div>
+                        <div class="location-row">🏙️ <strong>City:</strong> ${location.city}</div>
+                        <div class="location-row">🌎 <strong>Country:</strong> ${location.country}</div>
+                        <div class="location-row"><span class="weather-badge">${weather}</span></div>
+                    </div>
+
+                    <div class="match-footer">
+                        <div style="flex: 1;">
+                            ${match.status === 'SCHEDULED' ? `<span class="countdown" data-date="${match.utcDate}">Calculating...</span>` : ''}
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-share" onclick='shareMatch(${JSON.stringify(match).replace(/'/g, "&#39;")})'>📤 Share</button>
+                            ${calendarLink ? `<a href="${calendarLink}" target="_blank" class="btn btn-calendar">📅 Calendar</a>` : ''}
+                            ${highlightData ? `<a href="${highlightData.url}" target="_blank" class="btn btn-highlight">${highlightData.text}</a>` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderStandings() {
+            const container = document.getElementById('content');
+            container.innerHTML = '';
+
+            // Render Top Scorers First
+            const scorersDiv = document.createElement('div');
+            scorersDiv.className = 'scorers-container';
+            let scorerRows = mockTopScorers.map(p => `
+                <tr>
+                    <td style="width: 30px; font-weight: bold; color: var(--gold);">${p.rank}</td>
+                    <td class="team-cell">
+                        <img src="https://flagcdn.com/w40/${p.code}.png" class="flag" style="width:24px; height:18px;">
+                        ${p.name} <span style="color: var(--text-muted); font-weight: normal; font-size: 0.8rem;">(${p.country})</span>
+                    </td>
+                    <td style="text-align: center; font-weight: bold;">${p.goals}</td>
+                    <td style="text-align: center; color: var(--text-muted);">${p.assists}</td</tr>
+            `).join('');
+
+            scorersDiv.innerHTML = `
+                <div class="section-header">🥅 Golden Boot (Top Scorers)</div>
+                <table class="data-table">
+                    <thead><tr><th>#</th><th>Player</th><th style="text-align:center">Goals</th><th style="text-align:center">Assists</th></tr></thead>
+                    <tbody>${scorerRows}</tbody>
+                </table>
+            `;
+            container.appendChild(scorersDiv);
+
+            // Render Group Standings
+            const standingsData = USE_MOCK_DATA ? mockStandings : [];
+            if (standingsData.length === 0 && !USE_MOCK_DATA) {
+                container.innerHTML += '<div class="loading">Standings data not available in this API tier.</div>';
+                return;
+            }
+
+            standingsData.forEach(group => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'standings-container';
+                let rows = group.teams.map(team => `
+                    <tr>
+                        <td class="team-cell">
+                            <img src="https://flagcdn.com/w40/${team.code}.png" class="flag" style="width:24px; height:18px;">
+                            ${team.name}
+                        </td>
+                        <td>${team.played}</td>
+                        <td>${team.won}</td>
+                        <td>${team.drawn}</td>
+                        <td>${team.lost}</td>
+                        <td>${team.gf}:${team.ga}</td>
+                        <td class="pts-cell">${team.pts}</td>
+                    </tr>
+                `).join('');
+
+                groupDiv.innerHTML = `
+                    <div class="section-header">${group.group}</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Team</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                `;
+                container.appendChild(groupDiv);
+            });
+        }
+
+        function getStatusClass(status) {
+            if (status === 'LIVE' || status === 'IN_PLAY' || status === 'PAUSED') return 'status-live';
+            if (status === 'FINISHED') return 'status-finished';
+            return 'status-scheduled';
+        }
+
+        function getStatusText(status) {
+            if (status === 'LIVE' || status === 'IN_PLAY') return '🔴 LIVE';
+            if (status === 'FINISHED') return 'FT';
+            return 'Scheduled';
+        }
+
+        function getHighlightData(match) {
+            if (match.highlightUrl) return { url: match.highlightUrl, text: '▶ Watch Highlights' };
+            const year = new Date(match.utcDate).getFullYear();
+            const home = match.homeTeam?.name || 'Home';
+            const away = match.awayTeam?.name || 'Away';
+            const query = encodeURIComponent(`${home} vs ${away} ${year} World Cup goals highlights`);
+            return { url: `https://www.youtube.com/results?search_query=${query}`, text: '▶ Search Highlights' };
+        }
+
+        function getCalendarLink(match) {
+            const home = match.homeTeam?.name || 'Home';
+            const away = match.awayTeam?.name || 'Away';
+            const title = encodeURIComponent(`${home} vs ${away} - World Cup 2026`);
+            const location = encodeURIComponent(`${match.stadium || 'Stadium'}, ${match.city || 'City'}`);
+            const startDate = new Date(match.utcDate);
+            const endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000));
+            const formatCalDate = (d) => d.toISOString().replace(/-|:|\.\d+/g, "");
+            return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatCalDate(startDate)}/${formatCalDate(endDate)}&details=World%20Cup%202026%20Match&location=${location}&sf=true&output=xml`;
+        }
+
+        function getLocationDetails(match) {
+            if (match.stadium || match.city || match.country) {
+                return { stadium: match.stadium || 'Stadium TBA', city: match.city || 'City TBA', country: match.country || 'Country TBA' };
+            }
+            if (match.venue) {
+                const parts = match.venue.split(',').map(p => p.trim());
+                return { stadium: parts[0] || 'Stadium TBA', city: parts[1] || 'City TBA', country: parts[2] || 'Host Country' };
+            }
+            return { stadium: 'Venue TBA', city: 'City TBA', country: 'Country TBA' };
+        }
+
+        function startCountdowns() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                document.querySelectorAll('.countdown').forEach(el => {
+                    const targetDate = new Date(el.getAttribute('data-date')).getTime();
+                    const distance = targetDate - new Date().getTime();
+                    if (distance < 0) { el.innerHTML = "⏱️ Starting soon..."; return; }
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    let timeString = days > 0 ? `${days}d ` : "";
+                    timeString += `${hours}h ${minutes}m until kickoff`;
+                    el.innerHTML = `⏱️ ${timeString}`;
+                });
+            }, 1000);
+        }
+
+        init();
+        setInterval(() => { if (currentTab === 'scores' && !USE_MOCK_DATA) init(); }, 60000);
+    </script>
+</body>
+</html>
