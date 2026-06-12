@@ -216,105 +216,69 @@
         let countdownInterval;
         let favorites = JSON.parse(localStorage.getItem('wc2026_favorites')) || [];
 
-        // Complete mock data as fallback
-        const mockMatches = [
-            {
-                idEvent: '1', 
-                strEvent: 'Mexico vs South Africa',
-                strHomeTeam: 'Mexico', 
-                strAwayTeam: 'South Africa',
-                strTimestamp: '2026-06-11 20:00:00',
-                dateEvent: '2026-06-11',
-                strTime: '20:00:00',
-                strStatus: 'Match Finished',
-                intHomeScore: '2',
-                intAwayScore: '0',
-                strVenue: 'Estadio Azteca',
-                strCity: 'Mexico City',
-                strCountry: 'Mexico',
-                strLeague: 'FIFA World Cup',
-                strSeason: '2026',
-                idHomeTeam: '133612',
-                idAwayTeam: '133613'
-            },
-            {
-                idEvent: '2', 
-                strEvent: 'South Korea vs Czechia',
-                strHomeTeam: 'South Korea', 
-                strAwayTeam: 'Czechia',
-                strTimestamp: '2026-06-12 16:00:00',
-                dateEvent: '2026-06-12',
-                strTime: '16:00:00',
-                strStatus: 'Match Finished',
-                intHomeScore: '2',
-                intAwayScore: '1',
-                strVenue: 'SoFi Stadium',
-                strCity: 'Los Angeles',
-                strCountry: 'USA',
-                strLeague: 'FIFA World Cup',
-                strSeason: '2026',
-                idHomeTeam: '133614',
-                idAwayTeam: '133615'
-            },
-            {
-                idEvent: '3', 
-                strEvent: 'USA vs Wales',
-                strHomeTeam: 'USA', 
-                strAwayTeam: 'Wales',
-                strTimestamp: '2026-06-12 20:00:00',
-                dateEvent: '2026-06-12',
-                strTime: '20:00:00',
-                strStatus: 'In Play',
-                intHomeScore: '1',
-                intAwayScore: '1',
-                strVenue: 'SoFi Stadium',
-                strCity: 'Los Angeles',
-                strCountry: 'USA',
-                strLeague: 'FIFA World Cup',
-                strSeason: '2026',
-                idHomeTeam: '133616',
-                idAwayTeam: '133617'
-            },
-            {
-                idEvent: '4', 
-                strEvent: 'Canada vs Serbia',
-                strHomeTeam: 'Canada', 
-                strAwayTeam: 'Serbia',
-                strTimestamp: '2026-06-13 16:00:00',
-                dateEvent: '2026-06-13',
-                strTime: '16:00:00',
-                strStatus: 'Not Started',
-                intHomeScore: null,
-                intAwayScore: null,
-                strVenue: 'BMO Field',
-                strCity: 'Toronto',
-                strCountry: 'Canada',
-                strLeague: 'FIFA World Cup',
-                strSeason: '2026',
-                idHomeTeam: '133618',
-                idAwayTeam: '133619'
-            },
-            {
-                idEvent: '5', 
-                strEvent: 'Argentina vs Nigeria',
-                strHomeTeam: 'Argentina', 
-                strAwayTeam: 'Nigeria',
-                strTimestamp: '2026-06-13 20:00:00',
-                dateEvent: '2026-06-13',
-                strTime: '20:00:00',
-                strStatus: 'Not Started',
-                intHomeScore: null,
-                intAwayScore: null,
-                strVenue: 'MetLife Stadium',
-                strCity: 'New York',
-                strCountry: 'USA',
-                strLeague: 'FIFA World Cup',
-                strSeason: '2026',
-                idHomeTeam: '133620',
-                idAwayTeam: '133621'
-            }
-        ];
+const worldCup2026Schedule = [
+    // ==========================================
+    // YESTERDAY'S RESULTS (June 12) - FINISHED
+    // ==========================================
+    {
+        id: 'm1', stage: 'Group A', date: '2026-06-12', time: '16:00:00', status: 'FINISHED',
+        home: 'Mexico', away: 'France', homeScore: 1, awayScore: 2,
+        stadium: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico'
+    },
+    {
+        id: 'm2', stage: 'Group B', date: '2026-06-12', time: '19:00:00', status: 'FINISHED',
+        home: 'USA', away: 'Wales', homeScore: 2, awayScore: 1,
+        stadium: 'SoFi Stadium', city: 'Los Angeles', country: 'USA'
+    },
+    {
+        id: 'm3', stage: 'Group B', date: '2026-06-12', time: '22:00:00', status: 'FINISHED',
+        home: 'Canada', away: 'Serbia', homeScore: 0, awayScore: 0,
+        stadium: 'BMO Field', city: 'Toronto', country: 'Canada'
+    },
 
+    // ==========================================
+    // TODAY'S MATCHES (June 13) - SCHEDULED
+    // ==========================================
+    {
+        id: 'm4', stage: 'Group C', date: '2026-06-13', time: '13:00:00', status: 'SCHEDULED',
+        home: 'Argentina', away: 'Nigeria', homeScore: null, awayScore: null,
+        stadium: 'MetLife Stadium', city: 'New York', country: 'USA'
+    },
+    {
+        id: 'm5', stage: 'Group C', date: '2026-06-13', time: '16:00:00', status: 'SCHEDULED',
+        home: 'Brazil', away: 'South Korea', homeScore: null, awayScore: null,
+        stadium: 'AT&T Stadium', city: 'Dallas', country: 'USA'
+    },
+    {
+        id: 'm6', stage: 'Group D', date: '2026-06-13', time: '19:00:00', status: 'SCHEDULED',
+        home: 'England', away: 'Iran', homeScore: null, awayScore: null,
+        stadium: 'BC Place', city: 'Vancouver', country: 'Canada'
+    },
+    {
+        id: 'm7', stage: 'Group A', date: '2026-06-13', time: '22:00:00', status: 'SCHEDULED',
+        home: 'Spain', away: 'Morocco', homeScore: null, awayScore: null,
+        stadium: "Levi's Stadium", city: 'San Francisco', country: 'USA'
+    },
+
+    // ==========================================
+    // TOMORROW'S MATCHES (June 14) - SCHEDULED
+    // ==========================================
+    {
+        id: 'm8', stage: 'Group E', date: '2026-06-14', time: '13:00:00', status: 'SCHEDULED',
+        home: 'Germany', away: 'Japan', homeScore: null, awayScore: null,
+        stadium: 'Mercedes-Benz Stadium', city: 'Atlanta', country: 'USA'
+    },
+    {
+        id: 'm9', stage: 'Group F', date: '2026-06-14', time: '16:00:00', status: 'SCHEDULED',
+        home: 'Portugal', away: 'Ghana', homeScore: null, awayScore: null,
+        stadium: 'Lumen Field', city: 'Seattle', country: 'USA'
+    },
+    {
+        id: 'm10', stage: 'Group D', date: '2026-06-14', time: '19:00:00', status: 'SCHEDULED',
+        home: 'Uruguay', away: 'South Africa', homeScore: null, awayScore: null,
+        stadium: 'NRG Stadium', city: 'Houston', country: 'USA'
+    }
+];
         const mockWeather = {
             'Mexico City': '☀️ 72°F, Clear',
             'Los Angeles': '🌤️ 68°F, Partly Cloudy',
